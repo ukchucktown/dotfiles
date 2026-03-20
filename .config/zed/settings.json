@@ -1,0 +1,73 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "relative_line_numbers": "enabled",
+  "terminal": {
+    "font_family": "Agave Nerd Font Mono",
+    "font_size": 14.0,
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+  },
+  "session": {
+    "trust_all_worktrees": true,
+  },
+  "buffer_font_family": "Agave Nerd Font Mono",
+  "vim_mode": true,
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)",
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 14.0,
+  "rounded_selection": false,
+  "scrollbar": {
+    "show": "auto",
+    "axes": {
+      "horizontal": false,
+      "vertical": true,
+    },
+  },
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Islands Dark + Ayu UI",
+  },
+  "lsp": {
+    "java": {
+      "settings": {
+        "java.maven.downloadSources": true,
+      },
+    },
+    "lua-language-server": {
+      "settings": {
+        "Lua": {
+          "runtime": {
+            "version": "LuaJIT",
+          },
+          "workspace": {
+            "checkThirdParty": false,
+            "library": [
+              "/opt/homebrew/opt/neovim/share/nvim/runtime",
+              "/opt/homebrew/opt/neovim/share/nvim/runtime/lua",
+              "${3rd}/luv/library",
+            ],
+            "ignoreDir": [
+            ],
+          },
+          "diagnostics": {
+            "globals": ["vim"],
+          },
+        },
+      },
+    },
+  },
+}

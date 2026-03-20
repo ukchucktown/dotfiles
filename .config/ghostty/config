@@ -1,0 +1,39 @@
+#config-file="kanagawa-wave"
+config-file="subliminal-nightfall-fuzzy"
+background-opacity=0.80
+background-blur=true
+adjust-cell-height=15%
+adjust-cell-width=8%
+font-family="Agave Nerd Font Mono"
+#font-family="JetBrainsMono Nerd Font Mono"
+font-size=14
+font-thicken=false
+window-padding-x=10,10
+window-padding-y=10,10
+window-title-font-family="JetBrainsMono Nerd Font Mono"
+confirm-close-surface=false
+macos-option-as-alt=true
+#macos-titlebar-style=tabs
+window-decoration=false
+macos-window-shadow=true
+shell-integration=zsh
+quick-terminal-position=top
+window-inherit-working-directory=false
+
+# key bindings
+keybind=global:cmd+grave_accent=toggle_quick_terminal
+
+# Opacity tweak hotkeys: send escape sequences to the shell
+keybind=cmd+shift+equal=text:\x1b[201~
+keybind=cmd+shift+minus=text:\x1b[202~
+
+# Override default "Cmd+Number" tab selection shortcuts so macOS doesn't show them
+keybind=cmd+1=unbind
+keybind=cmd+2=unbind
+keybind=cmd+3=unbind
+keybind=cmd+4=unbind
+keybind=cmd+5=unbind
+keybind=cmd+6=unbind
+keybind=cmd+7=unbind
+keybind=cmd+8=unbind
+keybind=cmd+9=unbind
