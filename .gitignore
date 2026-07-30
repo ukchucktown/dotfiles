@@ -1,0 +1,12 @@
+.DS_Store
+**/.DS_Store
+
+# Authentication and cloud-provider state
+.config/gcloud/
+.config/gh/hosts.yml
+
+# Machine-generated application state
+.config/cagent/
+.config/herdr/*.log
+.config/herdr/*.sock
+.config/herdr/session.json
