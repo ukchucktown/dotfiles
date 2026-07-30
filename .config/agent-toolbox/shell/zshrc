@@ -1,0 +1,56 @@
+# Familiar interactive shell settings for Agent Toolbox. This package is
+# intentionally separate from the macOS .zshrc so it contains no Homebrew,
+# cloud-profile, or Ghostty mutation logic.
+
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+DISABLE_MAGIC_FUNCTIONS="true"
+DISABLE_AUTO_UPDATE="true"
+ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=110"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
+plugins=(
+  git
+  fzf-tab
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+)
+
+source "${ZSH}/oh-my-zsh.sh"
+source /opt/agent-shell/p10k.zsh
+
+zstyle ":completion:*:descriptions" format "[%d]"
+zstyle ":completion:*" menu select
+zstyle ":fzf-tab:*" fzf-flags --preview-window=down:40%:wrap
+zstyle ":fzf-tab:*" fzf-preview 'printf "%s\n" "$desc"'
+
+bindkey "^[[C" autosuggest-accept
+bindkey "^[OC" autosuggest-accept
+
+function set_tab_title {
+  if [[ "${PWD}" == "${HOME}" ]]; then
+    print -Pn "\e]0;~\a"
+  else
+    print -Pn "\e]0;%~\a"
+  fi
+}
+
+typeset -gi _set_tab_title_ready=0
+function set_tab_title_precmd {
+  if (( !_set_tab_title_ready )); then
+    _set_tab_title_ready=1
+    return
+  fi
+  set_tab_title
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd set_tab_title_precmd
+
+ZSH_HIGHLIGHT_STYLES[path]="none"
+ZSH_HIGHLIGHT_STYLES[path_prefix]="none"
+ZSH_HIGHLIGHT_STYLES[globbing]="none"
+export PROMPT_EOL_MARK=""
