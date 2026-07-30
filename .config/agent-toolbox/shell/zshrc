@@ -20,7 +20,7 @@ plugins=(
 )
 
 source "${ZSH}/oh-my-zsh.sh"
-source /opt/agent-shell/p10k.zsh
+source /opt/agent-p10k.zsh
 
 zstyle ":completion:*:descriptions" format "[%d]"
 zstyle ":completion:*" menu select
