@@ -1,0 +1,26 @@
+# Keep Stow's useful built-in exclusions when supplying a package-local list.
+RCS
+.+,v
+CVS
+\.\#.+
+\.cvsignore
+\.svn
+_darcs
+\.hg
+\.git
+\.gitignore
+\.gitmodules
+.+~
+\#.*\#
+^/README.*
+^/LICENSE.*
+^/COPYING
+
+# Machine-local and generated state that must never be linked from this package.
+\.DS_Store
+^/\.config/(cagent|gcloud|gh|git)(/.*)?$
+^/\.config/agent-toolbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
+^/\.config/herdr/(\.plugins\.lock|.*\.log|.*\.sock|session\.json)$
+^/\.config/zed/prompts(/.*)?$
+^/\.ideavimrc$
+^/agent-shell(/.*)?$

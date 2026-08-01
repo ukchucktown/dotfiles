@@ -1,6 +1,6 @@
 # Grant's dotfiles
 
-Configuration for a MacBook running Zsh and the private host-side layer for
+Configuration for a MacBook running Zsh and the host-side layer for
 [Agent Toolbox](https://github.com/ukchucktown/agent-toolbox). Files at the
 repository root configure the MacBook; `.config/agent-toolbox/shell` contains a
 smaller Linux-compatible shell package mounted read-only into the container.
@@ -37,6 +37,7 @@ configuration works on Apple Silicon and Intel Macs.
 | --- | --- | --- |
 | Zsh | Interactive shell | System Zsh |
 | Homebrew | Installs shell plugins and command-line tools | Current stable |
+| GNU Stow | Links this repository into the home directory | 2.4.1 |
 | Oh My Zsh | Plugin and theme loader | Git checkout |
 | Powerlevel10k | Prompt used by `.p10k.zsh` | Git checkout |
 | tmux | Sessions, windows, status bar, and scrollback | **3.7b** |
@@ -53,6 +54,7 @@ Install the Homebrew-managed requirements:
 
 ```sh
 brew install \
+  stow \
   tmux \
   fzf \
   fzf-tab \
@@ -149,8 +151,55 @@ not written directly into either file.
 
 ## Linking the configuration
 
-Clone the private repository to `~/dotfiles`. Back up any existing targets,
-then link the host entry points:
+### GNU Stow (preferred)
+
+This repository is a single Stow package rooted at the checkout itself. Clone
+it to `~/dotfiles`, install GNU Stow, and make sure `~/.config` is a real
+directory before linking:
+
+```sh
+git clone https://github.com/ukchucktown/dotfiles.git "$HOME/dotfiles"
+brew install stow
+mkdir -p "$HOME/.config"
+cd "$HOME/dotfiles"
+```
+
+Back up or remove existing targets first. Preview the operation, then create
+the links:
+
+```sh
+stow --simulate --verbose --target="$HOME" --no-folding .
+stow --target="$HOME" --no-folding .
+```
+
+`--no-folding` is intentional. It creates links for the managed files instead
+of replacing the whole `~/.config` directory with a link into the repository.
+That keeps credentials, application databases, sockets, logs, and other local
+state in the real home directory. The tracked `.stow-local-ignore` provides an
+additional guard against linking known machine-local files from an older
+checkout; Git and Stow use separate ignore files, so both must be updated when
+an application introduces a new kind of generated state.
+
+After pulling changes, preview and refresh the managed links with:
+
+```sh
+cd "$HOME/dotfiles"
+git pull --ff-only
+stow --simulate --verbose --target="$HOME" --no-folding --restow .
+stow --target="$HOME" --no-folding --restow .
+```
+
+Older installations may have a folded `~/.config -> ~/dotfiles/.config`
+link. That link continues to resolve the configuration, but it also causes
+untracked application state to accumulate inside the checkout. Move that
+local-only state into a real `~/.config` directory before switching the
+installation to `--no-folding`; do not blindly run `--restow` over a folded
+installation.
+
+### Manual links
+
+GNU Stow is optional. After backing up any existing targets, the host entry
+points can be linked manually:
 
 ```sh
 ln -s "$HOME/dotfiles/.zshrc" "$HOME/.zshrc"
@@ -168,6 +217,7 @@ mkdir -p "$HOME/.config"
 ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
 ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
+ln -s "$HOME/dotfiles/.config/zed" "$HOME/.config/zed"
 ln -s "$HOME/dotfiles/.config/agent-toolbox" "$HOME/.config/agent-toolbox"
 ```
 
@@ -211,7 +261,7 @@ updates can be shared back to the MacBook.
 [Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) is the public
 container project. It builds a remote development host with Zsh, tmux, Mosh,
 Herdr, Codex CLI, Claude Code, Node.js, Python, Java, Maven, Neovim, GitHub CLI,
-Camunda tooling, and common command-line utilities. This private repository
+Camunda tooling, and common command-line utilities. This repository
 supplies user-specific configuration through explicit read-only mounts.
 
 The split is intentional:
