@@ -1,0 +1,47 @@
+#!/bin/sh
+
+cpu_usage=""
+memory_usage=""
+
+case "$(uname -s)" in
+  Darwin)
+    cpu_usage=$(
+      LC_ALL=C top -l 1 -n 0 2>/dev/null |
+        awk '/CPU usage/ { idle = $7; gsub(/%/, "", idle) } END { if (idle != "") printf "%.1f", 100 - idle }'
+    )
+    memory_usage=$(
+      LC_ALL=C memory_pressure -Q 2>/dev/null |
+        awk '/System-wide memory free percentage/ { free = $5; gsub(/%/, "", free); printf "%.1f", 100 - free }'
+    )
+    ;;
+  Linux)
+    cpu_snapshot() {
+      set -- $(head -n 1 /proc/stat)
+      idle=$(( $5 + $6 ))
+      total=$(( $2 + $3 + $4 + $5 + $6 + $7 + $8 + $9 ))
+      printf '%s %s\n' "$idle" "$total"
+    }
+
+    set -- $(cpu_snapshot)
+    idle_before=$1
+    total_before=$2
+    sleep 0.1
+    set -- $(cpu_snapshot)
+    idle_after=$1
+    total_after=$2
+    cpu_usage=$(
+      awk -v idle_delta="$((idle_after - idle_before))" \
+        -v total_delta="$((total_after - total_before))" \
+        'BEGIN { if (total_delta > 0) printf "%.1f", 100 * (total_delta - idle_delta) / total_delta }'
+    )
+    memory_usage=$(
+      awk '
+        /MemTotal:/ { total = $2 }
+        /MemAvailable:/ { available = $2 }
+        END { if (total > 0) printf "%.1f", 100 * (total - available) / total }
+      ' /proc/meminfo
+    )
+    ;;
+esac
+
+printf ' %s   %s' "${cpu_usage:+${cpu_usage}%}" "${memory_usage:+${memory_usage}%}"

@@ -5,6 +5,28 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Setup Homebrew early so brew-installed plugins are available. Check both
+# standard macOS locations so the same file works on Apple Silicon and Intel.
+typeset _dotfiles_brew="$(command -v brew 2>/dev/null)"
+if [[ -z "$_dotfiles_brew" ]]; then
+  for _dotfiles_brew_candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [[ -x "$_dotfiles_brew_candidate" ]]; then
+      _dotfiles_brew="$_dotfiles_brew_candidate"
+      break
+    fi
+  done
+fi
+if [[ -n "$_dotfiles_brew" ]]; then
+  eval "$("$_dotfiles_brew" shellenv)"
+fi
+typeset _dotfiles_brew_prefix="${HOMEBREW_PREFIX:-}"
+
+# Machine-specific environment, credentials, and profile choices live here.
+# This file is intentionally outside the dotfiles repository.
+if [[ -r "$HOME/.zshrc.local" ]]; then
+  source "$HOME/.zshrc.local"
+fi
+
 # OMZ Home directory
 export OMZ_HOME="$HOME/.oh-my-zsh"
 
@@ -15,8 +37,24 @@ ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 
 # Setup plugins and source startup files
 ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git kubectl)
 source $OMZ_HOME/oh-my-zsh.sh
+
+# fzf-tab must load after completion is initialized and before widget-wrapping plugins.
+if [[ -r "$_dotfiles_brew_prefix/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh" ]]; then
+  source "$_dotfiles_brew_prefix/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
+fi
+
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' menu no
+zstyle ':fzf-tab:*' fzf-flags --preview-window=down:40%:wrap
+zstyle ':fzf-tab:*' fzf-preview 'printf "%s\n" "$desc"'
+
+# Load Homebrew-installed zsh plugins explicitly so Oh My Zsh doesn't need local copies.
+if [[ -r "$_dotfiles_brew_prefix/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+  source "$_dotfiles_brew_prefix/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+
 source ~/.p10k.zsh
 
 # Key bindings
@@ -26,26 +64,21 @@ bindkey '^[OC' autosuggest-accept
 # Change foreground color for zsh-autosuggestions
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=110'
 
-# remove underline on paths
-ZSH_HIGHLIGHT_STYLES[path]='none'
-# optional: also remove underline on directories / globbing / unknown tokens
-ZSH_HIGHLIGHT_STYLES[path_prefix]='none'
-ZSH_HIGHLIGHT_STYLES[globbing]='none'
-
-#  Setup brew environment
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
 # Alias definitions
-#alias python='/opt/homebrew/bin/python3'
+#alias python='python3'
 #alias pip='python -m pip'
 
 alias gemini='NODE_OPTIONS="--no-deprecation" gemini'
 
-# Shell functions
-c8run () {
-  (cd /opt/c8run && ./c8run "$@")
-}
+# Setup kubectl completion
+if command -v kubectl &> /dev/null; then
+  source <(kubectl completion zsh)
+fi
 
+zstyle ':completion:*' menu select
+zmodload zsh/complist
+
+# Shell functions
 function set_tab_title {
   if [[ "$PWD" == "$HOME" ]]; then
     echo -ne "\033]0;~\007"
@@ -54,103 +87,55 @@ function set_tab_title {
   fi
 }
 
+# Skip the first precmd run so terminal title output doesn't trip p10k instant prompt.
+typeset -gi _set_tab_title_ready=0
+set_tab_title_precmd() {
+  if (( !_set_tab_title_ready )); then
+    _set_tab_title_ready=1
+    return
+  fi
+  set_tab_title
+}
+
 autoload -U add-zsh-hook
-add-zsh-hook precmd set_tab_title
+add-zsh-hook precmd set_tab_title_precmd
 
-# Set JAVA_HOME
-export JAVA_HOME=`/usr/libexec/java_home`
+# Set JAVA_HOME without emitting startup warnings when Java is unavailable.
+if [[ -x /usr/libexec/java_home ]]; then
+  java_home="$('/usr/libexec/java_home' 2>/dev/null)" && export JAVA_HOME="$java_home"
+  unset java_home
+fi
 
-# Prefer brew curl over the system default
-export PATH="/opt/homebrew/opt/curl/bin:$PATH"
+# Path updates. Missing optional Homebrew packages leave harmless entries that
+# become active when the corresponding package is installed.
+path=("$HOME/.local/bin" $path)
+if [[ -n "$_dotfiles_brew_prefix" ]]; then
+  path=(
+    "$_dotfiles_brew_prefix/opt/python/libexec/bin"
+    "$_dotfiles_brew_prefix/share/google-cloud-sdk/bin"
+    "$_dotfiles_brew_prefix/opt/curl/bin"
+    $path
+  )
+fi
+typeset -U path
 
-# --- Ghostty opacity nudge helpers -----------------------------------------
+# Load Ghostty-specific shell helpers from a separate stow-managed file.
+if [[ -r "$HOME/.ghosttyrc" ]]; then
+  source "$HOME/.ghosttyrc"
+fi
 
-_ghostty_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
+# zsh-syntax-highlighting must be sourced at the end of .zshrc.
+if [[ -r "$_dotfiles_brew_prefix/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+  source "$_dotfiles_brew_prefix/opt/zsh-syntax-highlighting/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
 
-ghostty_opacity_get() {
-  # Read current opacity from config; fall back to 0.90
-  awk '
-    /^[[:space:]]*background-opacity[[:space:]]*=/ {
-      v=$0
-      sub(/.*=/, "", v)
-      gsub(/[[:space:]]/, "", v)
-      if (v == "") v = 0.90
-      printf "%.2f\n", v
-      found=1
-      exit
-    }
-    END { if (!found) printf "%.2f\n", 0.90 }
-  ' "$_ghostty_cfg"
-}
+unset _dotfiles_brew _dotfiles_brew_candidate _dotfiles_brew_prefix
 
-ghostty_opacity_nudge() {
-  local delta="$1"  # e.g. 0.05 or -0.05
-  local tmp="${_ghostty_cfg}.tmp.$$"
+# remove underline on paths
+ZSH_HIGHLIGHT_STYLES[path]='none'
+# optional: also remove underline on directories / globbing / unknown tokens
+ZSH_HIGHLIGHT_STYLES[path_prefix]='none'
+ZSH_HIGHLIGHT_STYLES[globbing]='none'
 
-  # Ensure file exists
-  mkdir -p "${_ghostty_cfg:h}"
-  [[ -f "$_ghostty_cfg" ]] || printf "background-opacity=0.90\n" >"$_ghostty_cfg"
-
-  # Update (clamp to [0.05, 1.0], step to 2 decimals)
-  awk -v d="$delta" '
-    BEGIN { updated=0 }
-    /^[[:space:]]*background-opacity[[:space:]]*=/ {
-      # grab number after "="
-      v=$0
-      sub(/.*=/, "", v)
-      gsub(/[[:space:]]/, "", v)
-      if (v == "") v = 0.90
-
-      nv = v + d
-      if (nv > 1.00) nv = 1.00
-      if (nv < 0.05) nv = 0.05
-
-      printf "background-opacity=%.2f\n", nv
-      updated=1
-      next
-    }
-    { print }
-    END {
-      if (!updated) {
-        # if the setting was not present, append it
-        printf "background-opacity=%.2f\n", (0.90 + d)
-      }
-    }
-  ' "$_ghostty_cfg" > "$tmp" && mv "$tmp" "$_ghostty_cfg"
-
-  # Defensive: establish a baseline if one hasn't been set yet
-  [[ -n "${_ghostty_opacity_base:-}" ]] || ghostty_opacity_set_base
-
-  _ghostty_opacity_last="$(ghostty_opacity_get)"
-  _ghostty_opacity_diff="$(awk -v n="$_ghostty_opacity_last" -v b="$_ghostty_opacity_base" 'BEGIN { printf "%+.2f", n - b }')"
-}
-
-ghostty_opacity_up()   { ghostty_opacity_nudge  0.05; zle -M "Ghostty opacity ${_ghostty_opacity_last} (Δ ${_ghostty_opacity_diff} since baseline; now reload config)"; }
-ghostty_opacity_down() { ghostty_opacity_nudge -0.05; zle -M "Ghostty opacity ${_ghostty_opacity_last} (Δ ${_ghostty_opacity_diff} since baseline; now reload config)"; }
-ghostty_select_command_line() {
-  zle beginning-of-line
-  zle set-mark-command
-  zle end-of-line
-}
-
-zle -N ghostty_opacity_up
-zle -N ghostty_opacity_down
-zle -N ghostty_select_command_line
-
-# Bind the escape sequences Ghostty sends:
-bindkey -M emacs $'\e[201~' ghostty_opacity_up
-bindkey -M emacs $'\e[202~' ghostty_opacity_down
-bindkey -M viins $'\e[201~' ghostty_opacity_up
-bindkey -M viins $'\e[202~' ghostty_opacity_down
-
-# Capture baseline opacity at shell load (used for Δ since last reload)
-mkdir -p "${_ghostty_cfg:h}"
-[[ -f "$_ghostty_cfg" ]] || printf "background-opacity=0.90\n" >"$_ghostty_cfg"
-ghostty_opacity_set_base() {
-  _ghostty_opacity_base="$(ghostty_opacity_get)"
-  _ghostty_opacity_last="$_ghostty_opacity_base"
-  _ghostty_opacity_diff="+0.00"
-}
-ghostty_opacity_set_base
-
-# OpenAPI Key
+# suppress prompt EOL mark
+export PROMPT_EOL_MARK=''

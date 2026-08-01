@@ -7,6 +7,24 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "project_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "base_keymap": "JetBrains",
   "relative_line_numbers": "enabled",
   "terminal": {
     "font_family": "Agave Nerd Font Mono",
@@ -19,8 +37,8 @@
   "session": {
     "trust_all_worktrees": true,
   },
-  "buffer_font_family": "Agave Nerd Font Mono",
-  "vim_mode": true,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "vim_mode": false,
   "icon_theme": {
     "mode": "dark",
     "light": "Zed (Default)",
@@ -56,11 +74,7 @@
           "workspace": {
             "checkThirdParty": false,
             "library": [
-              "/opt/homebrew/opt/neovim/share/nvim/runtime",
-              "/opt/homebrew/opt/neovim/share/nvim/runtime/lua",
               "${3rd}/luv/library",
-            ],
-            "ignoreDir": [
             ],
           },
           "diagnostics": {

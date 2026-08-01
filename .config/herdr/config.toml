@@ -1,0 +1,9 @@
+onboarding = false
+
+[ui]
+# Use a single shared divider between splits, closer to Ghostty's layout.
+pane_borders = true
+pane_gaps = false
+
+# Avoid spending a row on tab chrome until there is actually another tab.
+hide_tab_bar_when_single_tab = true

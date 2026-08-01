@@ -1,0 +1,53 @@
+{
+  "services": {
+    "sandbox": {
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/Github",
+          "target": "/workspace",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/dotfiles/.config/agent-toolbox/shell",
+          "target": "/opt/agent-shell",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/dotfiles/.p10k.zsh",
+          "target": "/opt/agent-p10k.zsh",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/dotfiles/.config/nvim",
+          "target": "/opt/agent-nvim",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/dotfiles/.config/nvim/nvim-pack-lock.json",
+          "target": "/opt/agent-nvim/nvim-pack-lock.json",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ]
+    }
+  }
+}
