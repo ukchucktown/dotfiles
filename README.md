@@ -1,10 +1,33 @@
 # Grant's dotfiles
 
-Configuration shared between the personal macOS shell and Agent Toolbox. The
-macOS shell uses the files at the repository root; the container uses the
-smaller, host-independent package under `.config/agent-toolbox/shell`.
+Configuration for a MacBook running Zsh and the private host-side layer for
+[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox). Files at the
+repository root configure the MacBook; `.config/agent-toolbox/shell` contains a
+smaller Linux-compatible shell package mounted read-only into the container.
 
-## macOS shell requirements
+## How the configuration fits together
+
+The MacBook and Agent Toolbox deliberately share presentation and interactive
+behavior without pretending they are the same operating system:
+
+| Concern | MacBook | Agent Toolbox container |
+| --- | --- | --- |
+| Zsh entry point | `~/.zshrc` | `/etc/agent-shell/.zshrc` |
+| Private Zsh additions | `~/.zshrc.local` | `/opt/agent-shell/zshrc` |
+| tmux entry point | `~/.tmux.conf` | `/etc/tmux.conf` |
+| Shared tmux configuration | `~/.config/agent-toolbox/shell/tmux.conf` | `/opt/agent-shell/tmux.conf` |
+| Prompt | `~/.p10k.zsh` | `/opt/agent-p10k.zsh` |
+| Neovim configuration | `~/.config/nvim` | `/opt/agent-nvim` |
+| Terminal rendering | Ghostty | The attaching terminal client |
+
+The host keeps Homebrew, cloud profiles, credentials, and Ghostty mutation
+logic out of the container package. The container package keeps Linux-specific
+paths and GNU command behavior out of the MacBook configuration. Shared tmux,
+Powerlevel10k, and Neovim files provide the consistent feel between them.
+
+## MacBook running Zsh
+
+### Requirements
 
 The following tools are needed to reproduce the shell and terminal appearance.
 The shell discovers Homebrew in either standard macOS location, so the same
@@ -12,7 +35,7 @@ configuration works on Apple Silicon and Intel Macs.
 
 | Tool | Why it is needed | Version tested here |
 | --- | --- | --- |
-| Zsh | Interactive shell | macOS system Zsh |
+| Zsh | Interactive shell | System Zsh |
 | Homebrew | Installs shell plugins and command-line tools | Current stable |
 | Oh My Zsh | Plugin and theme loader | Git checkout |
 | Powerlevel10k | Prompt used by `.p10k.zsh` | Git checkout |
@@ -41,8 +64,8 @@ brew install --cask \
   font-jetbrains-mono-nerd-font
 ```
 
-On a new machine, install Oh My Zsh and Powerlevel10k before starting an
-interactive shell with these dotfiles:
+On a new MacBook, install Oh My Zsh and Powerlevel10k before starting an
+interactive Zsh session with these dotfiles:
 
 ```sh
 git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
@@ -50,7 +73,42 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
   "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
 ```
 
-## Optional host tools
+### Zsh startup behavior
+
+The tracked `.zshrc`:
+
+- Loads Powerlevel10k instant prompt before other startup work.
+- Discovers Homebrew under either `/opt/homebrew` or `/usr/local`.
+- Sources `~/.zshrc.local` before loading the prompt so local environment
+  choices can appear in Powerlevel10k.
+- Initializes Oh My Zsh with the Git and kubectl plugins.
+- Loads fzf-tab after completion initialization, then loads autosuggestions and
+  syntax highlighting in the order required by those plugins.
+- Adds optional Homebrew Python, Google Cloud, and curl locations to `PATH`.
+- Sets `JAVA_HOME` only when `/usr/libexec/java_home` succeeds.
+- Updates the terminal title from the current directory after prompt startup.
+- Loads Ghostty-only widgets from `~/.ghosttyrc` when that file exists.
+
+### Terminal stack
+
+Ghostty supplies the quick terminal, transparency, split dimming, padding, and
+theme. tmux supplies persistent sessions and multiple named windows inside the
+quick terminal, without plugins. Its shared configuration provides:
+
+- One-based window and pane indexes.
+- A two-row status area at the top with a muted full-width divider.
+- Session or hostname context on the left and CPU/memory usage on the right.
+- Gold active-window text and lavender inactive-window text.
+- Content-sensitive automatic names such as `zsh` and `nvim`.
+- A distinct command prompt, mouse support, and 100,000 lines of history.
+- Copy-mode scrolling without the timestamp/position overlay or temporary
+  `[tmux]` window rename.
+
+tmux 3.7b is required because older releases do not understand every format and
+copy-mode option used by this status line. Nerd Font support is required for
+the terminal, CPU, memory, and divider glyphs.
+
+### Optional host tools
 
 The shell remains usable without these tools, but configuration is enabled for
 them when installed:
@@ -66,9 +124,9 @@ them when installed:
 | Gemini CLI | The `gemini` alias suppresses Node deprecation warnings |
 | GitHub CLI | GitHub command-line workflows |
 | Herdr | Agent-oriented terminal multiplexer configuration |
-| Docker Desktop | Runs Agent Sandbox |
+| Docker Desktop | Runs Agent Toolbox |
 
-Install the optional tools that are used on this Mac:
+Install the optional tools that are used on this MacBook:
 
 ```sh
 brew install kubernetes-cli awscli curl python@3.14 openjdk gh herdr
@@ -85,9 +143,9 @@ Machine-specific environment belongs in `~/.zshrc.local`, which is sourced by
 export AWS_PROFILE="your-profile-name"
 ```
 
-This Mac keeps its default AWS profile in that local file. API keys and other
-credentials should be loaded there from a keychain or password manager, not
-written directly into either file.
+Each MacBook keeps its own default AWS profile in that local file. API keys and
+other credentials should be loaded there from a keychain or password manager,
+not written directly into either file.
 
 ## Linking the configuration
 
@@ -109,14 +167,67 @@ state out of the repository:
 mkdir -p "$HOME/.config"
 ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
+ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
 ln -s "$HOME/dotfiles/.config/agent-toolbox" "$HOME/.config/agent-toolbox"
 ```
 
-The host `.tmux.conf` sources the shared tmux configuration from
-`~/.config/agent-toolbox/shell/tmux.conf`. Agent Sandbox mounts that same file
+The MacBook `.tmux.conf` sources the shared tmux configuration from
+`~/.config/agent-toolbox/shell/tmux.conf`. Agent Toolbox mounts that same file
 at `/opt/agent-shell/tmux.conf`, which keeps both environments visually aligned.
 
-## Machine-specific Agent Sandbox settings
+## Neovim
+
+The tracked `.config/nvim` directory is a small native-package configuration
+for Neovim 0.12 or newer. It keeps plugin declarations separate from settings
+for completion, editing, formatting, LSP, Telescope, Tree-sitter, and UI. See
+the dedicated [Neovim configuration guide](.config/nvim/README.md) for its
+layout and key mappings.
+
+The important portability choices are:
+
+- Plugins use Neovim's built-in `vim.pack` instead of a bootstrap plugin
+  manager.
+- `nvim-pack-lock.json` is tracked, giving the MacBook and container the same
+  plugin revisions.
+- Mason installs `lua-language-server` and `stylua` into Neovim's data
+  directory rather than the dotfiles repository.
+- Telescope uses `rg` for live grep and builds its FZF extension with `make`.
+- No user names, home-directory paths, credentials, or host-only runtime paths
+  are stored in the Lua configuration.
+
+Install the MacBook dependencies with:
+
+```sh
+brew install neovim ripgrep
+```
+
+Agent Toolbox already includes a pinned Neovim build, Tree-sitter CLI, `rg`,
+and native build tools. The config directory is mounted read-only at
+`/opt/agent-nvim`; only `nvim-pack-lock.json` is writable so deliberate plugin
+updates can be shared back to the MacBook.
+
+## Agent Toolbox
+
+[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) is the public
+container project. It builds a remote development host with Zsh, tmux, Mosh,
+Herdr, Codex CLI, Claude Code, Node.js, Python, Java, Maven, Neovim, GitHub CLI,
+Camunda tooling, and common command-line utilities. This private repository
+supplies user-specific configuration through explicit read-only mounts.
+
+The split is intentional:
+
+- The public repository owns the Dockerfile, launcher, security boundary,
+  health checks, SSH/Mosh services, and pinned toolchain installation.
+- This repository owns the prompt, terminal styling, tmux behavior, editor
+  configuration, local ports, and the list of host directories agents may see.
+- Credentials, agent histories, pairing state, and SSH host keys live in named
+  Docker volumes or ignored local files—not in either Git repository.
+
+The Docker service and volumes retain the historical `agent-sandbox` name so
+existing installations can upgrade in place. Use the `./sandbox` launcher from
+the Agent Toolbox checkout rather than invoking Compose directly.
+
+### Local Agent Toolbox configuration
 
 Copy the tracked environment template to the ignored local configuration:
 
@@ -128,7 +239,7 @@ cp "$HOME/.config/agent-toolbox/agent-sandbox.env.example" \
 Then review the host UID, published SSH port, Mosh UDP range, timezone, and
 network binding. The real `agent-sandbox.env` is intentionally ignored. The
 version pins in its example describe tools installed inside the image; those
-tools do not need to be installed directly on macOS.
+tools do not need to be installed directly on the MacBook.
 
 Copy `compose.mounts.yaml.example` to `compose.mounts.yaml`, then replace its
 placeholder sources with absolute paths for that Mac. The launcher requires
@@ -143,7 +254,46 @@ Router forwarding is only needed for the away configuration: TCP for SSH and
 the locally configured UDP range for Mosh. Docker Desktop is the only host
 requirement for the pinned container toolchain.
 
-## Files that affect the shell
+The mount configuration currently supports these responsibilities:
+
+| Host source | Container target | Access |
+| --- | --- | --- |
+| Project checkout root | `/workspace` | Read-write |
+| Agent shell package | `/opt/agent-shell` | Read-only |
+| Powerlevel10k config | `/opt/agent-p10k.zsh` | Read-only |
+| Neovim config | `/opt/agent-nvim` | Read-only, except its package lock |
+
+Only mount directories that agents are allowed to read and modify. Agent
+Toolbox intentionally does not mount the Docker socket, the rest of the home
+directory, host SSH configuration, or system credential stores.
+
+### Operating Agent Toolbox
+
+From the public repository checkout:
+
+```sh
+./sandbox build          # Build pinned tools into the image
+./sandbox up             # Create or update the running container
+./sandbox status         # Check health, tools, SSH, and Moshi hooks
+./sandbox shell          # Open a local shell in the container
+./sandbox mount list     # Inspect the effective host mounts
+./sandbox moshi-install  # Refresh Codex and Claude Moshi hooks
+```
+
+SSH is used for authentication and session startup. Mosh carries the roaming
+interactive connection over the configured UDP range, which tolerates phone
+sleep, network changes, and temporary loss of connectivity better than a plain
+SSH terminal. tmux keeps shells and agents alive inside the container when the
+client disconnects. Herdr is available as an alternative multiplexer, with its
+portable UI settings stored in `.config/herdr/config.toml`.
+
+Tool upgrades are deliberate: update pins in the ignored local environment
+from the tracked example, then run `./sandbox build`, `./sandbox up`, and
+`./sandbox moshi-install`. Do not remove the named Docker volumes unless the
+persisted agent logins, histories, Moshi pairing, and SSH identity should also
+be deleted.
+
+## Dotfile reference
 
 - `.zshrc` — macOS-specific interactive shell and optional cloud tooling.
 - `.p10k.zsh` — Powerlevel10k prompt.
@@ -154,6 +304,12 @@ requirement for the pinned container toolchain.
   status implementation using only operating-system utilities.
 - `.config/agent-toolbox/shell/zshrc` — container-specific Zsh configuration;
   it intentionally excludes Homebrew, cloud profiles, and host mutation logic.
+- `.config/ghostty/config` and `.config/ghostty/themes` — Ghostty appearance,
+  quick-terminal behavior, split presentation, and local themes.
+- `.config/herdr/config.toml` — portable Herdr pane and tab-row behavior.
+- `.config/nvim` — Neovim 0.12 configuration and pinned native package lock.
+- `.config/agent-toolbox/*.example` — versioned templates for ignored,
+  machine-local environment and mount settings.
 
 ## Authentication and generated state
 
