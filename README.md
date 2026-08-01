@@ -16,14 +16,14 @@ behavior without pretending they are the same operating system:
 | Private Zsh additions | `~/.zshrc.local` | `/opt/agent-shell/zshrc` |
 | tmux entry point | `~/.tmux.conf` | `/etc/tmux.conf` |
 | Shared tmux configuration | `~/.config/agent-toolbox/shell/tmux.conf` | `/opt/agent-shell/tmux.conf` |
-| Prompt | `~/.p10k.zsh` | `/opt/agent-p10k.zsh` |
+| Prompt | Selectable Powerlevel10k or Starship | Selectable Powerlevel10k or Starship |
 | Neovim configuration | `~/.config/nvim` | `/opt/agent-nvim` |
 | Terminal rendering | Ghostty | The attaching terminal client |
 
 The host keeps Homebrew, cloud profiles, credentials, and Ghostty mutation
 logic out of the container package. The container package keeps Linux-specific
 paths and GNU command behavior out of the MacBook configuration. Shared tmux,
-Powerlevel10k, and Neovim files provide the consistent feel between them.
+prompt, and Neovim files provide the consistent feel between them.
 
 ## MacBook running Zsh
 
@@ -39,13 +39,14 @@ configuration works on Apple Silicon and Intel Macs.
 | Homebrew | Installs shell plugins and command-line tools | Current stable |
 | GNU Stow | Links this repository into the home directory | 2.4.1 |
 | Oh My Zsh | Plugin and theme loader | Git checkout |
-| Powerlevel10k | Prompt used by `.p10k.zsh` | Git checkout |
+| Powerlevel10k | Default prompt and comparison fallback | Git checkout |
+| Starship | Actively maintained alternative prompt | 1.26.0 |
 | tmux | Sessions, windows, status bar, and scrollback | **3.7b** |
 | fzf and fzf-tab | Interactive completion menu | 0.74.1 / 1.3.0 |
 | zsh-autosuggestions | Inline command suggestions | 0.7.1 |
 | zsh-syntax-highlighting | Command-line syntax colors | 0.8.0 |
 | Ghostty | Terminal and quick terminal behavior | Current app release |
-| Nerd Font | Icons in tmux and Powerlevel10k | JetBrains Mono or Agave |
+| Nerd Font | Icons in tmux, Powerlevel10k, and Starship | JetBrains Mono or Agave |
 
 tmux 3.7b is the compatibility baseline. The shared configuration uses newer
 formatting and copy-mode options that tmux 3.3a does not support.
@@ -56,6 +57,7 @@ Install the Homebrew-managed requirements:
 brew install \
   stow \
   tmux \
+  starship \
   fzf \
   fzf-tab \
   zsh-autosuggestions \
@@ -67,7 +69,8 @@ brew install --cask \
 ```
 
 On a new MacBook, install Oh My Zsh and Powerlevel10k before starting an
-interactive Zsh session with these dotfiles:
+interactive Zsh session with these dotfiles. Powerlevel10k remains installed
+when Starship is selected so changing prompts does not require reinstalling it:
 
 ```sh
 git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
@@ -79,10 +82,14 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
 
 The tracked `.zshrc`:
 
-- Loads Powerlevel10k instant prompt before other startup work.
+- Selects `p10k` or `starship` through `DOTFILES_PROMPT`, defaulting to `p10k`.
+- Loads Powerlevel10k instant prompt only when Powerlevel10k is selected.
+- Keeps the initial prompt flush with the window padding, then inserts one
+  separator line after each completed command for either prompt engine, except
+  when `clear` redraws the terminal.
 - Discovers Homebrew under either `/opt/homebrew` or `/usr/local`.
-- Sources `~/.zshrc.local` before loading the prompt so local environment
-  choices can appear in Powerlevel10k.
+- Sources `~/.zshrc.local` before selecting the prompt so local environment
+  choices can appear in either prompt. Keep that file quiet during startup.
 - Initializes Oh My Zsh with the Git and kubectl plugins.
 - Loads fzf-tab after completion initialization, then loads autosuggestions and
   syntax highlighting in the order required by those plugins.
@@ -142,12 +149,22 @@ Machine-specific environment belongs in `~/.zshrc.local`, which is sourced by
 `.zshrc` but lives outside this repository. For example:
 
 ```sh
+export DOTFILES_PROMPT="starship" # or "p10k"; p10k is the default
 export AWS_PROFILE="your-profile-name"
 ```
 
 Each MacBook keeps its own default AWS profile in that local file. API keys and
 other credentials should be loaded there from a keychain or password manager,
 not written directly into either file.
+
+The tracked `.config/starship.toml` deliberately reproduces the everyday P10k
+shape and color indexes: directory and Git information on the first line,
+context aligned to the right, and `❯` on the second line. Restart Zsh after
+changing the selector:
+
+```sh
+exec zsh
+```
 
 ## Linking the configuration
 
@@ -214,6 +231,7 @@ state out of the repository:
 
 ```sh
 mkdir -p "$HOME/.config"
+ln -s "$HOME/dotfiles/.config/starship.toml" "$HOME/.config/starship.toml"
 ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
 ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
@@ -259,9 +277,9 @@ updates can be shared back to the MacBook.
 ## Agent Toolbox
 
 [Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) is the public
-container project. It builds a remote development host with Zsh, tmux, Mosh,
-Herdr, Codex CLI, Claude Code, Node.js, Python, Java, Maven, Neovim, GitHub CLI,
-Camunda tooling, and common command-line utilities. This repository
+container project. It builds a remote development host with Zsh, Powerlevel10k,
+Starship, tmux, Mosh, Herdr, Codex CLI, Claude Code, Node.js, Python, Java,
+Maven, Neovim, GitHub CLI, Camunda tooling, and common command-line utilities. This repository
 supplies user-specific configuration through explicit read-only mounts.
 
 The split is intentional:
@@ -309,9 +327,20 @@ The mount configuration currently supports these responsibilities:
 | Host source | Container target | Access |
 | --- | --- | --- |
 | Project checkout root | `/workspace` | Read-write |
+| Global agent skills | `/home/agent/.agents/skills` | Read-only |
+| Global agent skills | `/home/agent/.codex/skills` | Read-only |
+| Global agent skills | `/home/agent/.claude/skills` | Read-only |
 | Agent shell package | `/opt/agent-shell` | Read-only |
 | Powerlevel10k config | `/opt/agent-p10k.zsh` | Read-only |
+| Starship config | `/opt/agent-starship.toml` | Read-only |
 | Neovim config | `/opt/agent-nvim` | Read-only, except its package lock |
+
+The three skill mounts expose the canonical `~/.agents/skills` collection at
+the paths used by global skill tooling, Codex, and Claude. Agent Toolbox only
+allows these exact home-directory targets when they are read-only, so skills
+remain installable and maintainable from the MacBook but cannot be changed
+from inside the container. Each client's credentials, settings, plugins, and
+history remain private to the persistent container volume.
 
 Only mount directories that agents are allowed to read and modify. Agent
 Toolbox intentionally does not mount the Docker socket, the rest of the home
@@ -347,6 +376,8 @@ be deleted.
 
 - `.zshrc` — macOS-specific interactive shell and optional cloud tooling.
 - `.p10k.zsh` — Powerlevel10k prompt.
+- `.config/starship.toml` — reversible Starship alternative matching the P10k
+  layout and colors.
 - `.ghosttyrc` — Ghostty opacity helpers and key widgets.
 - `.tmux.conf` — macOS tmux entry point.
 - `.config/agent-toolbox/shell/tmux.conf` — shared tmux behavior and styling.
@@ -354,6 +385,8 @@ be deleted.
   status implementation using only operating-system utilities.
 - `.config/agent-toolbox/shell/zshrc` — container-specific Zsh configuration;
   it intentionally excludes Homebrew, cloud profiles, and host mutation logic.
+- `.config/agent-toolbox/shell/prompt-spacing.zsh` — portable prompt spacing
+  sourced by both the MacBook and Agent Toolbox shell adapters.
 - `.config/ghostty/config` and `.config/ghostty/themes` — Ghostty appearance,
   quick-terminal behavior, split presentation, and local themes.
 - `.config/herdr/config.toml` — portable Herdr pane and tab-row behavior.
@@ -378,6 +411,8 @@ After linking the files and installing dependencies:
 
 ```sh
 exec zsh
+echo "$DOTFILES_PROMPT"
+starship --version
 tmux -V
 tmux source-file "$HOME/.tmux.conf"
 ```

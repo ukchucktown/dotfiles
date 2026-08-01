@@ -1,0 +1,136 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
+# Keep the everyday shape of the Powerlevel10k prompt: directory and Git on
+# the first line, contextual details aligned right, and the input character on
+# the second line. Numeric colors deliberately match .p10k.zsh.
+format = """
+$directory\
+$git_branch\
+$git_status\
+$git_state\
+$fill\
+$direnv\
+$container\
+$username\
+$hostname\
+$jobs\
+$line_break\
+$character"""
+
+add_newline = false
+scan_timeout = 30
+command_timeout = 500
+palette = "powerlevel10k"
+
+[palettes.powerlevel10k]
+directory = "31"
+directory_shortened = "103"
+directory_anchor = "39"
+git_clean = "76"
+git_modified = "178"
+git_untracked = "39"
+git_conflicted = "196"
+git_loading = "244"
+success = "76"
+error = "196"
+context = "180"
+gold = "178"
+
+[directory]
+format = "[$path]($style)[$read_only]($read_only_style) "
+repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) "
+style = "directory"
+before_repo_root_style = "directory_shortened"
+repo_root_style = "bold directory_anchor"
+read_only = " "
+read_only_style = "error"
+truncation_length = 5
+truncate_to_repo = false
+fish_style_pwd_dir_length = 1
+
+[git_branch]
+format = "[$branch(:$remote_branch)]($style)"
+style = "git_clean"
+truncation_length = 32
+truncation_symbol = "…"
+
+[git_status]
+format = "([ $ahead_behind](git_clean))([ $stashed](git_clean))([ $conflicted](git_conflicted))([ $staged](git_modified))([ $modified](git_modified))([ $untracked](git_untracked))"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇣${behind_count}⇡${ahead_count}"
+up_to_date = ""
+stashed = "*${count}"
+conflicted = "~${count}"
+staged = "+${count}"
+modified = "!${count}"
+renamed = "!${count}"
+deleted = "!${count}"
+typechanged = "!${count}"
+untracked = "?${count}"
+
+[git_state]
+format = " [${state}( ${progress_current}/${progress_total})]($style)"
+style = "git_conflicted"
+
+[fill]
+symbol = " "
+style = "none"
+
+[direnv]
+format = "[$symbol$loaded]($style) "
+symbol = "direnv "
+style = "git_modified"
+
+[container]
+format = "[$symbol$name]($style) "
+symbol = "⬢ "
+style = "gold"
+
+[username]
+format = "[$user]($style)"
+style_user = "context"
+style_root = "bold gold"
+show_always = false
+
+[hostname]
+format = "[@$hostname]($style) "
+style = "context"
+ssh_only = true
+trim_at = "."
+
+[jobs]
+format = "[$symbol]($style) "
+symbol = "✦"
+style = "success"
+symbol_threshold = 1
+number_threshold = 9223372036854775807
+
+[character]
+format = "$symbol "
+success_symbol = "[❯](success)"
+error_symbol = "[❯](error)"
+vimcmd_symbol = "[❮](success)"
+
+# These common default modules would make the Starship trial visually busier
+# than the current prompt, so keep them off unless deliberately added later.
+[package]
+disabled = true
+
+[time]
+disabled = true
+
+[cmd_duration]
+disabled = true
+
+[aws]
+disabled = true
+
+[azure]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[kubernetes]
+disabled = true

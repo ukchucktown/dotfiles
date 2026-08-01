@@ -13,6 +13,33 @@
         },
         {
           "type": "bind",
+          "source": "/absolute/path/to/.agents/skills",
+          "target": "/home/agent/.agents/skills",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/.agents/skills",
+          "target": "/home/agent/.codex/skills",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/.agents/skills",
+          "target": "/home/agent/.claude/skills",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
           "source": "/absolute/path/to/dotfiles/.config/agent-toolbox/shell",
           "target": "/opt/agent-shell",
           "read_only": true,
@@ -24,6 +51,15 @@
           "type": "bind",
           "source": "/absolute/path/to/dotfiles/.p10k.zsh",
           "target": "/opt/agent-p10k.zsh",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/absolute/path/to/dotfiles/.config/starship.toml",
+          "target": "/opt/agent-starship.toml",
           "read_only": true,
           "bind": {
             "create_host_path": false

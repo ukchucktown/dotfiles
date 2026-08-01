@@ -1,7 +1,23 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+# Machine-specific environment, credentials, and prompt selection live here.
+# Keep this file quiet during startup so Powerlevel10k instant prompt can work.
+if [[ -r "$HOME/.zshrc.local" ]]; then
+  source "$HOME/.zshrc.local"
+fi
+
+# Powerlevel10k remains the default. Set DOTFILES_PROMPT=starship in
+# ~/.zshrc.local to try Starship without removing the existing prompt.
+typeset -g DOTFILES_PROMPT="${DOTFILES_PROMPT:-p10k}"
+case "$DOTFILES_PROMPT" in
+  p10k|starship) ;;
+  *)
+    print -u2 -- "dotfiles: unknown DOTFILES_PROMPT '$DOTFILES_PROMPT'; using p10k"
+    DOTFILES_PROMPT=p10k
+    ;;
+esac
+
+# Enable Powerlevel10k instant prompt only when Powerlevel10k is selected.
+if [[ "$DOTFILES_PROMPT" == p10k ]] &&
+   [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -21,12 +37,6 @@ if [[ -n "$_dotfiles_brew" ]]; then
 fi
 typeset _dotfiles_brew_prefix="${HOMEBREW_PREFIX:-}"
 
-# Machine-specific environment, credentials, and profile choices live here.
-# This file is intentionally outside the dotfiles repository.
-if [[ -r "$HOME/.zshrc.local" ]]; then
-  source "$HOME/.zshrc.local"
-fi
-
 # OMZ Home directory
 export OMZ_HOME="$HOME/.oh-my-zsh"
 
@@ -35,8 +45,13 @@ DISABLE_MAGIC_FUNCTIONS="true"
 DISABLE_AUTO_UPDATE="true"
 ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 
-# Setup plugins and source startup files
-ZSH_THEME="powerlevel10k/powerlevel10k"
+# Setup plugins and source startup files. Starship owns the prompt when selected,
+# so Oh My Zsh must not load a theme in that mode.
+if [[ "$DOTFILES_PROMPT" == p10k ]]; then
+  ZSH_THEME="powerlevel10k/powerlevel10k"
+else
+  ZSH_THEME=""
+fi
 plugins=(git kubectl)
 source $OMZ_HOME/oh-my-zsh.sh
 
@@ -55,7 +70,18 @@ if [[ -r "$_dotfiles_brew_prefix/opt/zsh-autosuggestions/share/zsh-autosuggestio
   source "$_dotfiles_brew_prefix/opt/zsh-autosuggestions/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 fi
 
-source ~/.p10k.zsh
+if [[ "$DOTFILES_PROMPT" == p10k ]]; then
+  if [[ -r "$HOME/.p10k.zsh" ]]; then
+    source "$HOME/.p10k.zsh"
+  else
+    print -u2 -- "dotfiles: p10k selected but ~/.p10k.zsh is unavailable"
+  fi
+elif command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+else
+  print -u2 -- "dotfiles: starship selected but the starship command is unavailable"
+  PROMPT='%F{76}❯%f '
+fi
 
 # Key bindings
 bindkey '^[[C' autosuggest-accept
@@ -99,6 +125,10 @@ set_tab_title_precmd() {
 
 autoload -U add-zsh-hook
 add-zsh-hook precmd set_tab_title_precmd
+
+if [[ -r "$HOME/.config/agent-toolbox/shell/prompt-spacing.zsh" ]]; then
+  source "$HOME/.config/agent-toolbox/shell/prompt-spacing.zsh"
+fi
 
 # Set JAVA_HOME without emitting startup warnings when Java is unavailable.
 if [[ -x /usr/libexec/java_home ]]; then

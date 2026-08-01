@@ -2,7 +2,17 @@
 # intentionally separate from the macOS .zshrc so it contains no Homebrew,
 # cloud-profile, or Ghostty mutation logic.
 
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+typeset -g DOTFILES_PROMPT="${DOTFILES_PROMPT:-p10k}"
+case "$DOTFILES_PROMPT" in
+  p10k|starship) ;;
+  *)
+    print -u2 -- "agent-shell: unknown DOTFILES_PROMPT '$DOTFILES_PROMPT'; using p10k"
+    DOTFILES_PROMPT=p10k
+    ;;
+esac
+
+if [[ "$DOTFILES_PROMPT" == p10k ]] &&
+   [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -11,7 +21,11 @@ DISABLE_AUTO_UPDATE="true"
 ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=110"
 
-ZSH_THEME="powerlevel10k/powerlevel10k"
+if [[ "$DOTFILES_PROMPT" == p10k ]]; then
+  ZSH_THEME="powerlevel10k/powerlevel10k"
+else
+  ZSH_THEME=""
+fi
 plugins=(
   git
   fzf-tab
@@ -20,7 +34,17 @@ plugins=(
 )
 
 source "${ZSH}/oh-my-zsh.sh"
-source /opt/agent-p10k.zsh
+if [[ "$DOTFILES_PROMPT" == p10k ]]; then
+  source /opt/agent-p10k.zsh
+elif command -v starship >/dev/null 2>&1; then
+  if [[ -r /opt/agent-starship.toml ]]; then
+    export STARSHIP_CONFIG=/opt/agent-starship.toml
+  fi
+  eval "$(starship init zsh)"
+else
+  print -u2 -- "agent-shell: starship selected but the starship command is unavailable"
+  PROMPT='%F{76}❯%f '
+fi
 
 # Match the BSD ls colors used by the macOS shell. GNU ls reads LS_COLORS
 # instead, so keep the equivalent semantic mapping without extension colors.
@@ -54,6 +78,10 @@ function set_tab_title_precmd {
 
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd set_tab_title_precmd
+
+if [[ -r /opt/agent-shell/prompt-spacing.zsh ]]; then
+  source /opt/agent-shell/prompt-spacing.zsh
+fi
 
 ZSH_HIGHLIGHT_STYLES[path]="none"
 ZSH_HIGHLIGHT_STYLES[path_prefix]="none"
