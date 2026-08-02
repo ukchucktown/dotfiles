@@ -1,0 +1,49 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dotfiles:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the dependency bundle
+        run: brew bundle list --file=Brewfile >/dev/null
+
+      - name: Install validation tools
+        run: brew install stow starship zoxide
+
+      - name: Check Zsh syntax
+        run: |
+          zsh -n \
+            .zshenv \
+            .zshrc \
+            .config/zsh/.zshenv \
+            .config/zsh/.zshrc \
+            .config/zsh/aliases.zsh \
+            .config/zsh/bindings.zsh \
+            .config/zsh/fzf.zsh \
+            .config/zsh/plugins.zsh \
+            .config/zsh/prompt.zsh \
+            .config/agent-toolbox/shell/zshrc \
+            .config/agent-toolbox/shell/prompt-spacing.zsh
+
+      - name: Test the man-page pager
+        run: zsh tests/manpager.zsh
+
+      - name: Validate Starship configuration
+        env:
+          STARSHIP_CONFIG: .config/starship.toml
+        run: starship print-config >/dev/null
+
+      - name: Preview Stow links
+        run: |
+          target="$(mktemp -d)"
+          mkdir -p "$target/.config"
+          stow --simulate --verbose --target="$target" --no-folding .

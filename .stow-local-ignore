@@ -15,12 +15,19 @@ _darcs
 ^/README.*
 ^/LICENSE.*
 ^/COPYING
+^/Brewfile$
+^/CONTRIBUTING.*
+^/THIRD_PARTY_NOTICES.*
+^/\.github(/.*)?$
 
 # Machine-local and generated state that must never be linked from this package.
 \.DS_Store
 ^/\.config/(cagent|gcloud|gh|git)(/.*)?$
+^/\.config/homebrew(/.*)?$
 ^/\.config/agent-toolbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
 ^/\.config/herdr/(\.plugins\.lock|.*\.log|.*\.sock|session\.json)$
+^/\.config/zsh/plugins(/.*)?$
 ^/\.config/zed/prompts(/.*)?$
 ^/\.ideavimrc$
 ^/agent-shell(/.*)?$
+^/tests(/.*)?$

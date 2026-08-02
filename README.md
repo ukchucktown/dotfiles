@@ -1,9 +1,84 @@
-# Grant's dotfiles
+# Terminal-first AI development environment
 
-Configuration for a MacBook running Zsh and the host-side layer for
-[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox). Files at the
-repository root configure the MacBook; `.config/agent-toolbox/shell` contains a
-smaller Linux-compatible shell package mounted read-only into the container.
+These dotfiles turn a Mac into a fast, keyboard-driven development environment
+for working with coding agents locally and through the companion
+[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) sandbox. The same
+prompt, editor, shell conventions, and persistent terminal sessions follow the
+workflow from Ghostty on the desktop to a roaming phone connection.
+
+The result is one coherent environment with three useful properties:
+
+- **Fast locally:** Zsh, Starship, Ghostty, tmux, Neovim, FZF, Eza, and zoxide
+  provide a focused terminal workflow without a shell framework.
+- **Safer for agents:** Agent Toolbox sees only explicitly approved mounts and
+  never receives the host home directory or Docker socket.
+- **Available anywhere:** SSH starts the connection, Mosh survives network
+  changes, and tmux or Herdr keeps work running when a phone disconnects.
+
+## Two repositories, one environment
+
+| Repository | Responsibility | Use it by itself? |
+| --- | --- | --- |
+| **[dotfiles](https://github.com/ukchucktown/dotfiles)** | macOS terminal, shell, prompt, editor, and shared presentation | Yes—install the full environment or adopt individual components |
+| **[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox)** | Container-scoped agent toolchain, explicit mounts, persistent state, and remote access | Yes—its portable shell works without these personal dotfiles |
+
+```mermaid
+flowchart LR
+    phone["Phone<br/>Moshi + Mosh"] -->|"roaming terminal"| toolbox
+    mac["Mac<br/>Ghostty + Zsh + tmux + Neovim"] -->|"Docker"| toolbox["Agent Toolbox<br/>Codex + Claude + Herdr"]
+    config["Selected config<br/>read-only"] --> toolbox
+    projects["Approved projects<br/>explicit mounts"] <--> toolbox
+    toolbox --> sessions["Persistent agent sessions"]
+```
+
+The repository root configures the Mac. `.config/agent-toolbox/shell` is a
+smaller Linux-compatible package mounted read-only into Agent Toolbox, which
+keeps the experience familiar without exposing unrelated host files.
+
+## Same session on laptop and phone
+
+<table>
+  <tr>
+    <td width="68%">
+      <img src="https://raw.githubusercontent.com/ukchucktown/agent-toolbox/main/docs/images/desktop-claude-session.png" alt="Claude Code running in the Agent Toolbox tmux session from a laptop terminal">
+    </td>
+    <td width="32%">
+      <img src="https://raw.githubusercontent.com/ukchucktown/agent-toolbox/main/docs/images/phone-claude-session.png" alt="The same Claude Code Agent Toolbox session accessed from a phone through Moshi and Mosh">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Laptop:</strong> Ghostty attached to the persistent <code>agent-sandbox</code> tmux session.</td>
+    <td><strong>Phone:</strong> Moshi and Mosh attached to the same session while away from the home network.</td>
+  </tr>
+</table>
+
+The two clients are attached to the same `1:claude` tmux window. The agent and
+its terminal remain inside Agent Toolbox while the client device changes.
+
+## Quick start
+
+Review the repository before linking it into your home directory; dotfiles are
+personal software, and the defaults should be understood before adoption.
+
+```sh
+git clone https://github.com/ukchucktown/dotfiles.git "$HOME/dotfiles"
+brew bundle --file="$HOME/dotfiles/Brewfile"
+mkdir -p "$HOME/.config"
+cd "$HOME/dotfiles"
+stow --simulate --verbose --target="$HOME" --no-folding .
+stow --target="$HOME" --no-folding .
+exec zsh
+```
+
+Already have dotfiles? Start with one component instead of adopting everything:
+
+| Experience | Files to review |
+| --- | --- |
+| Shell and prompt | `.zshenv`, `.zshrc`, `.config/zsh`, `.config/starship.toml` |
+| Terminal | `.ghosttyrc`, `.config/ghostty` |
+| Persistent sessions | `.tmux.conf`, `.config/agent-toolbox/shell/tmux*` |
+| Editor | `.config/nvim` and its [dedicated guide](.config/nvim/README.md) |
+| Agent companion | `.config/agent-toolbox` plus the [Agent Toolbox setup](https://github.com/ukchucktown/agent-toolbox#requirements) |
 
 ## How the configuration fits together
 
@@ -49,24 +124,10 @@ configuration works on Apple Silicon and Intel Macs.
 tmux 3.7b is the compatibility baseline. The shared configuration uses newer
 formatting and copy-mode options that tmux 3.3a does not support.
 
-Install the Homebrew-managed requirements:
+Install the Homebrew-managed requirements from the tracked bundle:
 
 ```sh
-brew install \
-  stow \
-  tmux \
-  starship \
-  fzf \
-  eza \
-  bat \
-  fd \
-  zoxide \
-  ripgrep \
-  neovim
-
-brew install --cask \
-  ghostty \
-  font-jetbrains-mono-nerd-font
+brew bundle --file="$HOME/dotfiles/Brewfile"
 ```
 
 The first interactive Zsh session clones the small standalone plugin set into
@@ -417,3 +478,11 @@ tmux source-file "$HOME/.tmux.conf"
 
 Confirm that `tmux -V` reports 3.7b or newer and that the terminal font renders
 the CPU, memory, terminal, and divider glyphs correctly.
+
+## Contributing and license
+
+Contributions that improve portability, documentation, or safe agent workflows
+are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull
+request. Original configuration in this repository is available under the
+[MIT License](LICENSE); named color themes retain any applicable upstream terms
+listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
