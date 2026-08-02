@@ -17,7 +17,7 @@ jobs:
         run: brew bundle list --file=Brewfile >/dev/null
 
       - name: Install validation tools
-        run: brew install stow starship zoxide
+        run: brew install bat stow starship zoxide
 
       - name: Check Zsh syntax
         run: |
