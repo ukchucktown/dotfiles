@@ -1,8 +1,7 @@
 "$schema" = "https://starship.rs/config-schema.json"
 
-# Keep the everyday shape of the Powerlevel10k prompt: directory and Git on
-# the first line, contextual details aligned right, and the input character on
-# the second line. Numeric colors deliberately match .p10k.zsh.
+# Keep the everyday two-line shape: directory and Git on the first line,
+# contextual details aligned right, and the input character on the second.
 format = """
 $directory\
 $git_branch\
@@ -20,9 +19,9 @@ $character"""
 add_newline = false
 scan_timeout = 30
 command_timeout = 500
-palette = "powerlevel10k"
+palette = "nightfall"
 
-[palettes.powerlevel10k]
+[palettes.nightfall]
 directory = "31"
 git_clean = "76"
 git_modified = "178"

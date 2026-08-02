@@ -1,89 +1,31 @@
-# Familiar interactive shell settings for Agent Toolbox. This package is
-# intentionally separate from the macOS .zshrc so it contains no Homebrew,
-# cloud-profile, or Ghostty mutation logic.
+# Personal extensions to Agent Toolbox's portable Zsh baseline. Keep macOS,
+# Homebrew, cloud-profile, and Ghostty mutation logic out of this file.
 
-typeset -g DOTFILES_PROMPT="${DOTFILES_PROMPT:-p10k}"
-case "$DOTFILES_PROMPT" in
-  p10k|starship) ;;
-  *)
-    print -u2 -- "agent-shell: unknown DOTFILES_PROMPT '$DOTFILES_PROMPT'; using p10k"
-    DOTFILES_PROMPT=p10k
-    ;;
-esac
+zstyle ':fzf-tab:*' fzf-preview 'printf "%s\n" "$desc"'
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^\' autosuggest-toggle
 
-if [[ "$DOTFILES_PROMPT" == p10k ]] &&
-   [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# Map file types to the host terminal's ANSI palette consistently.
+export LSCOLORS='Gxfxcxdxbxegedabagacad'
+export LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
+export EZA_COLORS="${LS_COLORS}"
+
+if [[ -r /opt/agent-starship.toml ]]; then
+  export STARSHIP_CONFIG=/opt/agent-starship.toml
 fi
 
-DISABLE_MAGIC_FUNCTIONS="true"
-DISABLE_AUTO_UPDATE="true"
-ZSH_AUTOSUGGEST_MANUAL_REBIND=1
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=110"
-
-if [[ "$DOTFILES_PROMPT" == p10k ]]; then
-  ZSH_THEME="powerlevel10k/powerlevel10k"
-else
-  ZSH_THEME=""
-fi
-plugins=(
-  git
-  fzf-tab
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-)
-
-source "${ZSH}/oh-my-zsh.sh"
-if [[ "$DOTFILES_PROMPT" == p10k ]]; then
-  source /opt/agent-p10k.zsh
-elif command -v starship >/dev/null 2>&1; then
-  if [[ -r /opt/agent-starship.toml ]]; then
-    export STARSHIP_CONFIG=/opt/agent-starship.toml
-  fi
-  eval "$(starship init zsh)"
-else
-  print -u2 -- "agent-shell: starship selected but the starship command is unavailable"
-  PROMPT='%F{76}❯%f '
-fi
-
-# Match the BSD ls colors used by the macOS shell. GNU ls reads LS_COLORS
-# instead, so keep the equivalent semantic mapping without extension colors.
-export LSCOLORS="Gxfxcxdxbxegedabagacad"
-export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
-
-zstyle ":completion:*:descriptions" format "[%d]"
-zstyle ":completion:*" menu select
-zstyle ":fzf-tab:*" fzf-flags --preview-window=down:40%:wrap
-zstyle ":fzf-tab:*" fzf-preview 'printf "%s\n" "$desc"'
-
-bindkey "^[[C" autosuggest-accept
-bindkey "^[OC" autosuggest-accept
-
-function set_tab_title {
+set_tab_title() {
   if [[ "${PWD}" == "${HOME}" ]]; then
-    print -Pn "\e]0;~\a"
+    print -Pn '\e]0;~\a'
   else
-    print -Pn "\e]0;%~\a"
+    print -Pn '\e]0;%~\a'
   fi
-}
-
-typeset -gi _set_tab_title_ready=0
-function set_tab_title_precmd {
-  if (( !_set_tab_title_ready )); then
-    _set_tab_title_ready=1
-    return
-  fi
-  set_tab_title
 }
 
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd set_tab_title_precmd
+add-zsh-hook precmd set_tab_title
 
 if [[ -r /opt/agent-shell/prompt-spacing.zsh ]]; then
   source /opt/agent-shell/prompt-spacing.zsh
 fi
-
-ZSH_HIGHLIGHT_STYLES[path]="none"
-ZSH_HIGHLIGHT_STYLES[path_prefix]="none"
-ZSH_HIGHLIGHT_STYLES[globbing]="none"
-export PROMPT_EOL_MARK=""

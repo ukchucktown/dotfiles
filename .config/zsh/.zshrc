@@ -56,7 +56,7 @@ if [[ -o zle ]]; then
   source "$ZDOTDIR/bindings.zsh"
 fi
 
-# Native command completions replace the corresponding Oh My Zsh plugins.
+# Native command completions require no shell framework.
 if command -v kubectl >/dev/null 2>&1; then
   source <(kubectl completion zsh)
 fi

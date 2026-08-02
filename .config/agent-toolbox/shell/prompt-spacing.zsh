@@ -1,8 +1,8 @@
 # Shared prompt spacing for the MacBook and Agent Toolbox. Source this file
 # after the selected prompt engine has initialized.
 
-[[ -n "${_DOTFILES_PROMPT_SPACING_LOADED:-}" ]] && return
-typeset -g _DOTFILES_PROMPT_SPACING_LOADED=1
+[[ -n "${_AGENT_PROMPT_SPACING_LOADED:-}" ]] && return
+typeset -g _AGENT_PROMPT_SPACING_LOADED=1
 
 # Keep the first prompt flush with terminal padding. After a command completes,
 # add one separator row unless the command itself cleared the screen.
