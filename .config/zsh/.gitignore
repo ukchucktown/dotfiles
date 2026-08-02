@@ -1,0 +1,12 @@
+# Downloaded plugin repositories
+plugins/
+
+# Generated Zsh files
+*.zwc
+.zcompdump*
+
+# Machine-local overrides
+local.zsh
+
+# macOS metadata
+.DS_Store

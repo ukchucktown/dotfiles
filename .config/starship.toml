@@ -24,8 +24,6 @@ palette = "powerlevel10k"
 
 [palettes.powerlevel10k]
 directory = "31"
-directory_shortened = "103"
-directory_anchor = "39"
 git_clean = "76"
 git_modified = "178"
 git_untracked = "39"
@@ -38,10 +36,7 @@ gold = "178"
 
 [directory]
 format = "[$path]($style)[$read_only]($read_only_style) "
-repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) "
 style = "directory"
-before_repo_root_style = "directory_shortened"
-repo_root_style = "bold directory_anchor"
 read_only = " "
 read_only_style = "error"
 truncation_length = 5
