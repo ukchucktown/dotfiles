@@ -1,13 +1,14 @@
 # Keep the familiar Emacs-style keymap; zsh-vi-mode is intentionally omitted.
 bindkey -e
 
+# Edit the current command buffer in $VISUAL or $EDITOR with Ctrl+X, Ctrl+E.
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^X^E' edit-command-line
+
 # Accept the current autosuggestion with Right Arrow.
 bindkey '^[[C' autosuggest-accept
 bindkey '^[OC' autosuggest-accept
-
-# Move by word with Ctrl+Left and Ctrl+Right.
-bindkey '^[[1;5C' forward-word
-bindkey '^[[1;5D' backward-word
 
 # Search command history by substring with Up and Down.
 bindkey '^[[A' history-substring-search-up

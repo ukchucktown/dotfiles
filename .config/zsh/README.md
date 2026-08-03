@@ -53,7 +53,8 @@ zplugin-update
 | `Ctrl+R` | Fuzzy history search |
 | `Ctrl+T` | Fuzzy file search, including hidden files |
 | `Ctrl+F` | Fuzzy file search, excluding hidden files |
-| `Ctrl+Left` / `Ctrl+Right` | Move backward/forward one word |
+| `Option+Left` / `Option+Right` | Move backward/forward one word |
+| `Ctrl+X`, then `Ctrl+E` | Edit the current command line in `$VISUAL` or `$EDITOR` |
 | `Right` | Accept the current autosuggestion |
 | `Up` / `Down` | Search history by substring |
 | `Ctrl+Backslash` | Toggle autosuggestions |
