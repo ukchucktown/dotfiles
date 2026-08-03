@@ -1,18 +1,12 @@
 "$schema" = "https://starship.rs/config-schema.json"
 
 # Keep the everyday two-line shape: directory and Git on the first line,
-# contextual details aligned right, and the input character on the second.
+# and the input character on the second.
 format = """
 $directory\
 $git_branch\
 $git_status\
 $git_state\
-$fill\
-$direnv\
-$container\
-$username\
-$hostname\
-$jobs\
 $line_break\
 $character"""
 

@@ -213,8 +213,8 @@ other credentials should be loaded there from a keychain or password manager,
 not written directly into either file.
 
 The tracked `.config/starship.toml` keeps directory and Git information on the
-first line, contextual details aligned to the right, and `❯` on the second
-line. Restart Zsh after changing shell configuration:
+first line and `❯` on the second, with nothing rendered in the right gutter.
+Restart Zsh after changing shell configuration:
 
 ```sh
 exec zsh
