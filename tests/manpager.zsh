@@ -3,9 +3,14 @@
 set -euo pipefail
 
 typeset repository_root="${0:A:h:h}"
-unset MANPAGER PAGER
+unset MANPAGER PAGER LESS
 export PATH='/usr/bin:/bin:/usr/sbin:/sbin'
 source "${repository_root}/.config/zsh/.zshenv"
+
+if [[ " ${LESS:-} " != *' --mouse '* || " ${LESS:-} " != *' --wheel-lines=3 '* ]]; then
+  print -u2 -- 'FAIL: LESS does not enable three-line mouse-wheel scrolling'
+  exit 1
+fi
 
 if [[ -z "${MANPAGER:-}" ]]; then
   print -u2 -- 'FAIL: MANPAGER is unset after a minimal-path shell startup'

@@ -13,6 +13,7 @@ dotfiles repository's existing tools and Starship prompt.
 | `aliases.zsh` | Command, navigation, editor, Git, and local aliases |
 | `bindings.zsh` | Autosuggestion, history, navigation, and FZF bindings |
 | `fzf.zsh` | FZF defaults, previews, and file selection |
+| `functions.zsh` | User-facing shell functions |
 | `plugins.zsh` | Small clone/source/update plugin loader |
 | `prompt.zsh` | Starship initialization |
 
@@ -52,10 +53,9 @@ zplugin-update
 | --- | --- |
 | `Ctrl+R` | Fuzzy history search |
 | `Ctrl+T` | Fuzzy file search, including hidden files |
-| `Ctrl+F` | Fuzzy file search, excluding hidden files |
+| `Ctrl+F` / `Right` | Move forward one character |
 | `Option+Left` / `Option+Right` | Move backward/forward one word |
 | `Ctrl+X`, then `Ctrl+E` | Edit the current command line in `$VISUAL` or `$EDITOR` |
-| `Right` | Accept the current autosuggestion |
 | `Up` / `Down` | Search history by substring |
 | `Ctrl+Backslash` | Toggle autosuggestions |
 

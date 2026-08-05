@@ -150,6 +150,8 @@ prompt modules. The setup:
 - Maps Eza file types to the active Ghostty ANSI palette consistently inside
   and outside tmux.
 - Initializes zoxide and FZF history/file search with `fd` and `bat` previews.
+- Renders colored manual pages through `bat` and enables three-line mouse-wheel
+  scrolling in `less`.
 - Adds optional Homebrew Python, Google Cloud, and curl locations to `PATH`.
 - Sets `JAVA_HOME` only when `/usr/libexec/java_home` succeeds.
 - Updates the terminal title and loads Ghostty-only widgets when available.

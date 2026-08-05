@@ -42,6 +42,7 @@ fi
 # Core modules. Plugin order matters: fzf-tab follows compinit, while syntax
 # highlighting is loaded at the very end of this file.
 source "$ZDOTDIR/fzf.zsh"
+source "$ZDOTDIR/functions.zsh"
 source "$ZDOTDIR/aliases.zsh"
 source "$ZDOTDIR/plugins.zsh"
 

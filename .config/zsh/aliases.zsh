@@ -3,7 +3,8 @@ if command -v eza >/dev/null 2>&1; then
   alias ls='eza --icons'
   alias ll='eza -lh --icons --git --no-user --no-time'
   alias la='eza -lah --icons --git --no-user --no-time'
-  alias tree='eza --tree --icons'
+  alias tree="eza -a --tree --level=3 --ignore-glob='.git|.DS_Store' --icons=auto"
+  alias dtree="eza -a --tree --level=3 --ignore-glob='.git|.DS_Store' --icons=auto -D"
   (( $+functions[compdef] )) && compdef eza=ls
 fi
 
@@ -20,6 +21,10 @@ alias df='df -h'
 # Navigation
 alias -- -='cd -'
 
+# Manual pages
+alias cman='_man_search --command'
+alias tman='_man_search --topic'
+
 # Editor
 if command -v nvim >/dev/null 2>&1; then
   alias vim='nvim'
@@ -28,9 +33,6 @@ fi
 # Git
 alias glog='PAGER="less -F -X" git log'
 alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
-dotfiles() {
-  git -C "$HOME/dotfiles" "$@"
-}
 
 # Local tools
 alias gemini='NODE_OPTIONS="--no-deprecation" gemini'

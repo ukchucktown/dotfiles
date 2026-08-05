@@ -24,6 +24,13 @@ export VISUAL="${VISUAL:-nvim}"
 # Prompt configuration stays in its existing tracked location.
 export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship.toml"
 
+# Keep c8ctl human-readable by default; use --json for structured output.
+export C8CTL_OUTPUT_MODE=text
+
+# Preserve ANSI colors and let less handle mouse-wheel scrolling. Three lines
+# per wheel event keeps long manual pages controllable without feeling slow.
+export LESS='-R --mouse --wheel-lines=3'
+
 # Strip traditional overstrike backspaces before syntax-highlighting man pages.
 if command -v col >/dev/null 2>&1 && command -v bat >/dev/null 2>&1; then
   export MANPAGER="sh -c 'col -bx | bat --color=always --theme=ansi -l man -p'"
