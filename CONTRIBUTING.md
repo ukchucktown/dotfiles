@@ -5,7 +5,7 @@ and maintain.
 
 ## Good contributions
 
-- Portability improvements for macOS, Linux, or Agent Toolbox.
+- Portability improvements for macOS, Linux, or Agent Sandbox.
 - Clearer setup, troubleshooting, and component-adoption documentation.
 - Shell changes that preserve fast startup and framework-free plugin loading.
 - Safer defaults for credentials, mounts, remote access, and generated state.
@@ -19,7 +19,7 @@ tradeoffs can be discussed before implementation.
 Never submit API keys, credentials, shell history, private hostnames, cloud
 profiles, project paths, or application databases. Machine-specific values
 belong in ignored local files such as `~/.zshrc.local` and
-`~/.config/agent-toolbox/agent-sandbox.env`.
+`~/.config/agent-sandbox/agent-sandbox.env`.
 
 If a contribution adds a generated file or application directory, update both
 `.gitignore` and `.stow-local-ignore` when appropriate.

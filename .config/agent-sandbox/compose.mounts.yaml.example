@@ -40,7 +40,7 @@
         },
         {
           "type": "bind",
-          "source": "/absolute/path/to/dotfiles/.config/agent-toolbox/shell",
+          "source": "/absolute/path/to/dotfiles/.config/agent-sandbox/shell",
           "target": "/opt/agent-shell",
           "read_only": true,
           "bind": {

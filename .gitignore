@@ -5,9 +5,9 @@
 .config/gcloud/
 .config/gh/hosts.yml
 
-# Machine-local Agent Toolbox settings (copy from the tracked example)
-.config/agent-toolbox/agent-sandbox.env
-.config/agent-toolbox/compose.mounts.yaml
+# Machine-local Agent Sandbox settings (copy from the tracked example)
+.config/agent-sandbox/agent-sandbox.env
+.config/agent-sandbox/compose.mounts.yaml
 
 # Machine-generated application state
 .config/cagent/

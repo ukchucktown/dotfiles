@@ -24,7 +24,7 @@ _darcs
 \.DS_Store
 ^/\.config/(cagent|gcloud|gh|git)(/.*)?$
 ^/\.config/homebrew(/.*)?$
-^/\.config/agent-toolbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
+^/\.config/agent-sandbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
 ^/\.config/herdr/(\.plugins\.lock|.*\.log|.*\.sock|session\.json)$
 ^/\.config/zsh/plugins(/.*)?$
 ^/\.config/zed/prompts(/.*)?$

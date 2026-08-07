@@ -80,8 +80,8 @@ set_tab_title_precmd() {
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd set_tab_title_precmd
 
-if [[ -r "$HOME/.config/agent-toolbox/shell/prompt-spacing.zsh" ]]; then
-  source "$HOME/.config/agent-toolbox/shell/prompt-spacing.zsh"
+if [[ -r "$HOME/.config/agent-sandbox/shell/prompt-spacing.zsh" ]]; then
+  source "$HOME/.config/agent-sandbox/shell/prompt-spacing.zsh"
 fi
 
 # Set JAVA_HOME quietly when a Java installation is available.

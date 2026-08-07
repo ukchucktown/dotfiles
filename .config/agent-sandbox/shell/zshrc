@@ -1,4 +1,4 @@
-# Personal extensions to Agent Toolbox's portable Zsh baseline. Keep macOS,
+# Personal extensions to Agent Sandbox's portable Zsh baseline. Keep macOS,
 # Homebrew, cloud-profile, and Ghostty mutation logic out of this file.
 
 zstyle ':fzf-tab:*' fzf-preview 'printf "%s\n" "$desc"'

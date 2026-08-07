@@ -1,4 +1,4 @@
-# Shared prompt spacing for the MacBook and Agent Toolbox. Source this file
+# Shared prompt spacing for the MacBook and Agent Sandbox. Source this file
 # after the selected prompt engine has initialized.
 
 [[ -n "${_AGENT_PROMPT_SPACING_LOADED:-}" ]] && return

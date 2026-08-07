@@ -2,7 +2,7 @@
 
 These dotfiles turn a Mac into a fast, keyboard-driven development environment
 for working with coding agents locally and through the companion
-[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) sandbox. The same
+[Agent Sandbox](https://github.com/ukchucktown/agent-sandbox) container. The same
 prompt, editor, shell conventions, and persistent terminal sessions follow the
 workflow from Ghostty on the desktop to a roaming phone connection.
 
@@ -10,7 +10,7 @@ The result is one coherent environment with three useful properties:
 
 - **Fast locally:** Zsh, Starship, Ghostty, tmux, Neovim, FZF, Eza, and zoxide
   provide a focused terminal workflow without a shell framework.
-- **Safer for agents:** Agent Toolbox sees only explicitly approved mounts and
+- **Safer for agents:** Agent Sandbox sees only explicitly approved mounts and
   never receives the host home directory or Docker socket.
 - **Available anywhere:** SSH starts the connection, Mosh survives network
   changes, and tmux or Herdr keeps work running when a phone disconnects.
@@ -20,19 +20,19 @@ The result is one coherent environment with three useful properties:
 | Repository | Responsibility | Use it by itself? |
 | --- | --- | --- |
 | **[dotfiles](https://github.com/ukchucktown/dotfiles)** | macOS terminal, shell, prompt, editor, and shared presentation | Yes—install the full environment or adopt individual components |
-| **[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox)** | Container-scoped agent toolchain, explicit mounts, persistent state, and remote access | Yes—its portable shell works without these personal dotfiles |
+| **[Agent Sandbox](https://github.com/ukchucktown/agent-sandbox)** | Container-scoped agent toolchain, explicit mounts, persistent state, and remote access | Yes—its portable shell works without these personal dotfiles |
 
 ```mermaid
 flowchart LR
-    phone["Phone<br/>Moshi + Mosh"] -->|"roaming terminal"| toolbox
-    mac["Mac<br/>Ghostty + Zsh + tmux + Neovim"] -->|"Docker"| toolbox["Agent Toolbox<br/>Codex + Claude + Herdr"]
-    config["Selected config<br/>read-only"] --> toolbox
-    projects["Approved projects<br/>explicit mounts"] <--> toolbox
-    toolbox --> sessions["Persistent agent sessions"]
+    phone["Phone<br/>Moshi + Mosh"] -->|"roaming terminal"| sandbox
+    mac["Mac<br/>Ghostty + Zsh + tmux + Neovim"] -->|"Docker"| sandbox["Agent Sandbox<br/>Codex + Claude + Herdr"]
+    config["Selected config<br/>read-only"] --> sandbox
+    projects["Approved projects<br/>explicit mounts"] <--> sandbox
+    sandbox --> sessions["Persistent agent sessions"]
 ```
 
-The repository root configures the Mac. `.config/agent-toolbox/shell` is a
-smaller Linux-compatible package mounted read-only into Agent Toolbox, which
+The repository root configures the Mac. `.config/agent-sandbox/shell` is a
+smaller Linux-compatible package mounted read-only into Agent Sandbox, which
 keeps the experience familiar without exposing unrelated host files.
 
 ## Same session on laptop and phone
@@ -40,10 +40,10 @@ keeps the experience familiar without exposing unrelated host files.
 <table>
   <tr>
     <td width="68%">
-      <img src="https://raw.githubusercontent.com/ukchucktown/agent-toolbox/main/docs/images/desktop-claude-session.png" alt="Claude Code running in the Agent Toolbox tmux session from a laptop terminal">
+      <img src="https://raw.githubusercontent.com/ukchucktown/agent-sandbox/main/docs/images/desktop-claude-session.png" alt="Claude Code running in the Agent Sandbox tmux session from a laptop terminal">
     </td>
     <td width="32%">
-      <img src="https://raw.githubusercontent.com/ukchucktown/agent-toolbox/main/docs/images/phone-claude-session.png" alt="The same Claude Code Agent Toolbox session accessed from a phone through Moshi and Mosh">
+      <img src="https://raw.githubusercontent.com/ukchucktown/agent-sandbox/main/docs/images/phone-claude-session.png" alt="The same Claude Code Agent Sandbox session accessed from a phone through Moshi and Mosh">
     </td>
   </tr>
   <tr>
@@ -53,7 +53,7 @@ keeps the experience familiar without exposing unrelated host files.
 </table>
 
 The two clients are attached to the same `1:claude` tmux window. The agent and
-its terminal remain inside Agent Toolbox while the client device changes.
+its terminal remain inside Agent Sandbox while the client device changes.
 
 ## Quick start
 
@@ -76,21 +76,21 @@ Already have dotfiles? Start with one component instead of adopting everything:
 | --- | --- |
 | Shell and prompt | `.zshenv`, `.zshrc`, `.config/zsh`, `.config/starship.toml` |
 | Terminal | `.ghosttyrc`, `.config/ghostty` |
-| Persistent sessions | `.tmux.conf`, `.config/agent-toolbox/shell/tmux*` |
+| Persistent sessions | `.tmux.conf`, `.config/agent-sandbox/shell/tmux*` |
 | Editor | `.config/nvim` and its [dedicated guide](.config/nvim/README.md) |
-| Agent companion | `.config/agent-toolbox` plus the [Agent Toolbox setup](https://github.com/ukchucktown/agent-toolbox#requirements) |
+| Agent companion | `.config/agent-sandbox` plus the [Agent Sandbox setup](https://github.com/ukchucktown/agent-sandbox#requirements) |
 
 ## How the configuration fits together
 
-The MacBook and Agent Toolbox deliberately share presentation and interactive
+The MacBook and Agent Sandbox deliberately share presentation and interactive
 behavior without pretending they are the same operating system:
 
-| Concern | MacBook | Agent Toolbox container |
+| Concern | MacBook | Agent Sandbox container |
 | --- | --- | --- |
 | Zsh entry point | `~/.zshenv` → `~/.config/zsh/.zshrc` | `/etc/agent-shell/.zshrc` |
 | Private Zsh additions | `~/.zshrc.local` | `/opt/agent-shell/zshrc` |
 | tmux entry point | `~/.tmux.conf` | `/etc/tmux.conf` |
-| Shared tmux configuration | `~/.config/agent-toolbox/shell/tmux.conf` | `/opt/agent-shell/tmux.conf` |
+| Shared tmux configuration | `~/.config/agent-sandbox/shell/tmux.conf` | `/opt/agent-shell/tmux.conf` |
 | Prompt | Starship | Starship |
 | Neovim configuration | `~/.config/nvim` | `/opt/agent-nvim` |
 | Terminal rendering | Ghostty | The attaching terminal client |
@@ -191,7 +191,7 @@ them when installed:
 | Gemini CLI | The `gemini` alias suppresses Node deprecation warnings |
 | GitHub CLI | GitHub command-line workflows |
 | Herdr | Agent-oriented terminal multiplexer configuration |
-| Docker Desktop | Runs Agent Toolbox |
+| Docker Desktop | Runs Agent Sandbox |
 
 Install the optional tools that are used on this MacBook:
 
@@ -293,11 +293,11 @@ ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
 ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
 ln -s "$HOME/dotfiles/.config/zed" "$HOME/.config/zed"
-ln -s "$HOME/dotfiles/.config/agent-toolbox" "$HOME/.config/agent-toolbox"
+ln -s "$HOME/dotfiles/.config/agent-sandbox" "$HOME/.config/agent-sandbox"
 ```
 
 The MacBook `.tmux.conf` sources the shared tmux configuration from
-`~/.config/agent-toolbox/shell/tmux.conf`. Agent Toolbox mounts that same file
+`~/.config/agent-sandbox/shell/tmux.conf`. Agent Sandbox mounts that same file
 at `/opt/agent-shell/tmux.conf`, which keeps both environments visually aligned.
 
 ## Neovim
@@ -326,14 +326,14 @@ Install the MacBook dependencies with:
 brew install neovim ripgrep
 ```
 
-Agent Toolbox already includes a pinned Neovim build, Tree-sitter CLI, `rg`,
+Agent Sandbox already includes a pinned Neovim build, Tree-sitter CLI, `rg`,
 and native build tools. The config directory is mounted read-only at
 `/opt/agent-nvim`; only `nvim-pack-lock.json` is writable so deliberate plugin
 updates can be shared back to the MacBook.
 
-## Agent Toolbox
+## Agent Sandbox
 
-[Agent Toolbox](https://github.com/ukchucktown/agent-toolbox) is the public
+[Agent Sandbox](https://github.com/ukchucktown/agent-sandbox) is the public
 container project. It builds a remote development host with Zsh, Starship,
 standalone shell plugins, Eza aliases, FZF behavior, zoxide, tmux, Mosh, Herdr,
 Codex CLI, Claude Code, Node.js, Python, Java, Maven, Neovim, GitHub CLI,
@@ -351,15 +351,15 @@ The split is intentional:
 
 The Docker service and volumes retain the historical `agent-sandbox` name so
 existing installations can upgrade in place. Use the `./sandbox` launcher from
-the Agent Toolbox checkout rather than invoking Compose directly.
+the Agent Sandbox checkout rather than invoking Compose directly.
 
-### Local Agent Toolbox configuration
+### Local Agent Sandbox configuration
 
 Copy the tracked environment template to the ignored local configuration:
 
 ```sh
-cp "$HOME/.config/agent-toolbox/agent-sandbox.env.example" \
-  "$HOME/.config/agent-toolbox/agent-sandbox.env"
+cp "$HOME/.config/agent-sandbox/agent-sandbox.env.example" \
+  "$HOME/.config/agent-sandbox/agent-sandbox.env"
 ```
 
 Then review the host UID, published SSH port, Mosh UDP range, timezone, and
@@ -372,8 +372,8 @@ placeholder sources with absolute paths for that Mac. The launcher requires
 absolute mount sources, so the real mount file is machine-local and ignored:
 
 ```sh
-cp "$HOME/.config/agent-toolbox/compose.mounts.yaml.example" \
-  "$HOME/.config/agent-toolbox/compose.mounts.yaml"
+cp "$HOME/.config/agent-sandbox/compose.mounts.yaml.example" \
+  "$HOME/.config/agent-sandbox/compose.mounts.yaml"
 ```
 
 Router forwarding is only needed for the away configuration: TCP for SSH and
@@ -397,17 +397,17 @@ The image owns the portable shell baseline, including `ll`, `la`, `ls`, and
 host terminal palette, additional bindings, title handling, and prompt spacing.
 
 The three skill mounts expose the canonical `~/.agents/skills` collection at
-the paths used by global skill tooling, Codex, and Claude. Agent Toolbox only
+the paths used by global skill tooling, Codex, and Claude. Agent Sandbox only
 allows these exact home-directory targets when they are read-only, so skills
 remain installable and maintainable from the MacBook but cannot be changed
 from inside the container. Each client's credentials, settings, plugins, and
 history remain private to the persistent container volume.
 
 Only mount directories that agents are allowed to read and modify. Agent
-Toolbox intentionally does not mount the Docker socket, the rest of the home
+Agent Sandbox intentionally does not mount the Docker socket, the rest of the home
 directory, host SSH configuration, or system credential stores.
 
-### Operating Agent Toolbox
+### Operating Agent Sandbox
 
 From the public repository checkout:
 
@@ -441,19 +441,19 @@ be deleted.
 - `.config/starship.toml` — shared two-line Starship prompt and color palette.
 - `.ghosttyrc` — Ghostty opacity helpers and key widgets.
 - `.tmux.conf` — macOS tmux entry point.
-- `.config/agent-toolbox/shell/tmux.conf` — shared tmux behavior and styling.
-- `.config/agent-toolbox/shell/tmux-system-stats` — macOS/Linux CPU and memory
+- `.config/agent-sandbox/shell/tmux.conf` — shared tmux behavior and styling.
+- `.config/agent-sandbox/shell/tmux-system-stats` — macOS/Linux CPU and memory
   status implementation using only operating-system utilities.
-- `.config/agent-toolbox/shell/zshrc` — personal extensions to the container's
+- `.config/agent-sandbox/shell/zshrc` — personal extensions to the container's
   portable Zsh baseline; it excludes Homebrew, cloud profiles, and host
   mutation logic.
-- `.config/agent-toolbox/shell/prompt-spacing.zsh` — portable prompt spacing
-  sourced by both the MacBook and Agent Toolbox shell adapters.
+- `.config/agent-sandbox/shell/prompt-spacing.zsh` — portable prompt spacing
+  sourced by both the MacBook and Agent Sandbox shell adapters.
 - `.config/ghostty/config` and `.config/ghostty/themes` — Ghostty appearance,
   quick-terminal behavior, split presentation, and local themes.
 - `.config/herdr/config.toml` — portable Herdr pane and tab-row behavior.
 - `.config/nvim` — Neovim 0.12 configuration and pinned native package lock.
-- `.config/agent-toolbox/*.example` — versioned templates for ignored,
+- `.config/agent-sandbox/*.example` — versioned templates for ignored,
   machine-local environment and mount settings.
 
 ## Authentication and generated state
