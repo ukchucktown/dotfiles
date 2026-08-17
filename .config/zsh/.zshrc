@@ -23,6 +23,15 @@ setopt AUTOCD
 setopt NOBEEP
 setopt NUMERIC_GLOB_SORT
 
+# Make completions installed by Homebrew available to compinit on both Apple
+# Silicon and Intel Macs.
+typeset -gU fpath FPATH
+fpath=(
+  /opt/homebrew/share/zsh/site-functions
+  /usr/local/share/zsh/site-functions
+  $fpath
+)
+
 # Completion must be initialized before fzf-tab and aliases that use compdef.
 autoload -Uz compinit
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
@@ -60,6 +69,7 @@ fi
 # Native command completions require no shell framework.
 if command -v kubectl >/dev/null 2>&1; then
   source <(kubectl completion zsh)
+  compdef _kubectl kubectl k
 fi
 
 source "$ZDOTDIR/prompt.zsh"

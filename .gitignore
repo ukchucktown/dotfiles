@@ -11,6 +11,7 @@
 
 # Machine-generated application state
 .config/cagent/
+.config/homebrew/*.lock
 .config/herdr/*.log
 .config/herdr/*.sock
 .config/herdr/.plugins.lock
