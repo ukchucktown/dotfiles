@@ -66,3 +66,8 @@ exits. Press `Q` inside Yazi to quit without changing the shell directory.
 
 Machine-specific environment variables and credentials remain in
 `~/.zshrc.local`. The file is sourced early and should not be committed.
+
+Optional dotfile repositories can install shell fragments under
+`~/.local/share/dotfiles-addons` (or `$XDG_DATA_HOME/dotfiles-addons` when that
+variable is set). The directory is absent in the default personal setup, so
+add-on code is neither cloned nor stored unless it is installed separately.

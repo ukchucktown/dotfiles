@@ -1,0 +1,11 @@
+#!/bin/zsh
+
+emulate -L zsh
+setopt err_exit nounset pipe_fail
+
+script_dir="${0:A:h}"
+patch_script="$script_dir/../share/terminal-viewer/patch-terminal-browser-quit.mjs"
+
+node "$patch_script"
+
+exec "$HOME/.local/bin/terminal-browser" "$@" --partition=terminal-viewer

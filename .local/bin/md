@@ -1,0 +1,38 @@
+#!/bin/zsh
+
+emulate -L zsh
+setopt pipe_fail
+
+if (( $# == 0 )); then
+  if (( ! $+commands[fd] || ! $+commands[fzf] )); then
+    print -u2 -- 'md: selecting a file requires fd and fzf'
+    exit 127
+  fi
+
+  preview_command='sed -n "1,240p" -- {}'
+  if (( $+commands[bat] )); then
+    preview_command='bat --style=numbers --color=always -- {}'
+  fi
+
+  selected=$(
+    command fd --type file --hidden --exclude .git \
+      --extension md --extension markdown . |
+      command fzf \
+        --prompt='markdown> ' \
+        --preview="$preview_command" \
+        --preview-window='right:60%:wrap'
+  ) || exit
+
+  [[ -n "$selected" ]] || exit
+  set -- "$selected"
+fi
+
+if (( $# != 1 )); then
+  print -u2 -- 'usage: md [FILE.md]'
+  exit 2
+fi
+
+exec "$HOME/.local/bin/mdterm" \
+  --preview \
+  --viewer "$HOME/.local/bin/terminal-viewer" \
+  -- "$1"

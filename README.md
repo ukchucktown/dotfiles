@@ -8,24 +8,31 @@ workflow from Ghostty on the desktop to a roaming phone connection.
 
 The result is one coherent environment with three useful properties:
 
-- **Fast locally:** Zsh, Starship, Ghostty, tmux, Neovim, FZF, Eza, and zoxide
-  provide a focused terminal workflow without a shell framework.
+- **Fast locally:** Zsh, Starship, Ghostty, tmux, Neovim, Yazi, FZF, Eza, and
+  zoxide provide a focused terminal workflow without a shell framework.
 - **Safer for agents:** Agent Sandbox sees only explicitly approved mounts and
   never receives the host home directory or Docker socket.
 - **Available anywhere:** SSH starts the connection, Mosh survives network
   changes, and tmux or Herdr keeps work running when a phone disconnects.
 
-## Two repositories, one environment
+## Repository boundaries
 
-| Repository | Responsibility | Use it by itself? |
+| Repository | Responsibility | Relationship |
 | --- | --- | --- |
-| **[dotfiles](https://github.com/ukchucktown/dotfiles)** | macOS terminal, shell, prompt, editor, and shared presentation | Yes—install the full environment or adopt individual components |
-| **[Agent Sandbox](https://github.com/ukchucktown/agent-sandbox)** | Container-scoped agent toolchain, explicit mounts, persistent state, and remote access | Yes—its portable shell works without these personal dotfiles |
+| **[dotfiles](https://github.com/ukchucktown/dotfiles)** | Personal macOS terminal, shell, prompt, editor, and file-manager configuration | The standalone base; install the full environment or adopt individual components |
+| **[dotfiles-camunda](https://github.com/ukchucktown/dotfiles-camunda)** | Lightweight BPMN, DMN, and Camunda Form viewing plus Desktop Modeler launchers | Optional add-on; install separately on machines that need Camunda artifact support |
+| **[Agent Sandbox](https://github.com/ukchucktown/agent-sandbox)** | Container-scoped agent toolchain, explicit mounts, persistent state, and remote access | Independent companion; its portable shell works without these personal dotfiles |
+
+This repository is the personal default. It contains the generic add-on loading
+seam, but it does not contain the Camunda libraries, viewer assets, launchers,
+test fixtures, or Yazi actions. Those files stay in `dotfiles-camunda`, so a
+machine that clones only this repository never downloads or stores them.
 
 ```mermaid
 flowchart LR
     phone["Phone<br/>Moshi + Mosh"] -->|"roaming terminal"| sandbox
     mac["Mac<br/>Ghostty + Zsh + tmux + Neovim"] -->|"Docker"| sandbox["Agent Sandbox<br/>Codex + Claude + Herdr"]
+    camunda["dotfiles-camunda<br/>optional artifact viewers"] -.->|"layers onto"| mac
     config["Selected config<br/>read-only"] --> sandbox
     projects["Approved projects<br/>explicit mounts"] <--> sandbox
     sandbox --> sessions["Persistent agent sessions"]
@@ -70,6 +77,10 @@ stow --target="$HOME" --no-folding .
 exec zsh
 ```
 
+This installs the standalone personal base only. Optional add-ons such as
+[`dotfiles-camunda`](https://github.com/ukchucktown/dotfiles-camunda) are cloned
+and installed separately.
+
 Already have dotfiles? Start with one component instead of adopting everything:
 
 | Experience | Files to review |
@@ -78,6 +89,8 @@ Already have dotfiles? Start with one component instead of adopting everything:
 | Terminal | `.ghosttyrc`, `.config/ghostty` |
 | Persistent sessions | `.tmux.conf`, `.config/agent-sandbox/shell/tmux*` |
 | Editor | `.config/nvim` and its [dedicated guide](.config/nvim/README.md) |
+| File manager | `.config/yazi` and the `y` wrapper in `.config/zsh/functions.zsh` |
+| Camunda artifacts | Separate [`dotfiles-camunda`](https://github.com/ukchucktown/dotfiles-camunda) add-on |
 | Agent companion | `.config/agent-sandbox` plus the [Agent Sandbox setup](https://github.com/ukchucktown/agent-sandbox#requirements) |
 
 ## How the configuration fits together
@@ -93,6 +106,7 @@ behavior without pretending they are the same operating system:
 | Shared tmux configuration | `~/.config/agent-sandbox/shell/tmux.conf` | `/opt/agent-shell/tmux.conf` |
 | Prompt | Starship | Starship |
 | Neovim configuration | `~/.config/nvim` | `/opt/agent-nvim` |
+| File manager | `~/.config/yazi` | Host only |
 | Terminal rendering | Ghostty | The attaching terminal client |
 
 The host keeps Homebrew, cloud profiles, credentials, and Ghostty mutation
@@ -117,9 +131,10 @@ configuration works on Apple Silicon and Intel Macs.
 | tmux | Sessions, windows, status bar, and scrollback | **3.7b** |
 | fzf | Interactive history and file search | 0.74.1 |
 | Eza, bat, fd, zoxide, ripgrep | Modern listing, preview, navigation, and search tools | Current stable |
+| Yazi | Terminal file manager with previews and fuzzy navigation | 26.5.6 |
 | Standalone Zsh plugins | Completion, suggestions, history search, and syntax colors | Git checkouts |
 | Ghostty | Terminal and quick terminal behavior | Current app release |
-| Nerd Font | Icons in tmux, Starship, and Eza | JetBrains Mono or Agave |
+| Nerd Font | Icons in tmux, Starship, Eza, and Yazi | JetBrains Mono or Agave |
 
 tmux 3.7b is the compatibility baseline. The shared configuration uses newer
 formatting and copy-mode options that tmux 3.3a does not support.
@@ -150,6 +165,9 @@ prompt modules. The setup:
 - Maps Eza file types to the active Ghostty ANSI palette consistently inside
   and outside tmux.
 - Initializes zoxide and FZF history/file search with `fd` and `bat` previews.
+- Provides a `y` wrapper that returns Zsh to Yazi's final directory on exit.
+- Loads separately installed dotfile add-ons from the XDG data directory while
+  keeping the default personal clone self-contained.
 - Renders colored manual pages through `bat` and enables three-line mouse-wheel
   scrolling in `less`.
 - Adds optional Homebrew Python, Google Cloud, and curl locations to `PATH`.
@@ -292,6 +310,7 @@ ln -s "$HOME/dotfiles/.config/starship.toml" "$HOME/.config/starship.toml"
 ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
 ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
+ln -s "$HOME/dotfiles/.config/yazi" "$HOME/.config/yazi"
 ln -s "$HOME/dotfiles/.config/zed" "$HOME/.config/zed"
 ln -s "$HOME/dotfiles/.config/agent-sandbox" "$HOME/.config/agent-sandbox"
 ```
@@ -331,6 +350,37 @@ and native build tools. The config directory is mounted read-only at
 `/opt/agent-nvim`; only `nvim-pack-lock.json` is writable so deliberate plugin
 updates can be shared back to the MacBook.
 
+## Yazi
+
+The tracked `.config/yazi` directory adds a Subliminal Nightfall theme, natural
+directory-first sorting, a compact size column, and shortcuts to the dotfiles
+and project directories. Run `y` to launch it and carry its final directory
+back into Zsh; use `Q` inside Yazi when the shell should stay where it was.
+
+For Markdown files, Enter uses the tracked `md` and `terminal-viewer` wrappers
+for an in-terminal preview, `e` opens the file in `$EDITOR`, and `O` or
+Shift-Enter opens Yazi's action chooser. The preview path expects Node.js plus
+separately installed `mdterm` and `terminal-browser`; those three tools are not
+installed by this repository's `Brewfile`. Yazi navigation and editing remain
+usable without them.
+
+See the [Yazi configuration guide](.config/yazi/README.md) for the local
+keybindings and preview requirements.
+
+## Optional add-ons
+
+The Zsh startup files load separately installed fragments from
+`~/.local/share/dotfiles-addons` (or `$XDG_DATA_HOME/dotfiles-addons`). With no
+fragments present, the personal configuration behaves exactly as a standalone
+installation.
+
+[`dotfiles-camunda`](https://github.com/ukchucktown/dotfiles-camunda) uses this
+seam to add lightweight BPMN, DMN, and Camunda Form viewers, filename suffix
+aliases, a Camunda-aware Yazi profile, and a Camunda Desktop Modeler launcher.
+It installs only links under `~/.local`, can be removed independently, and is
+not required on personal machines. Install this repository first, then follow
+the add-on's own README.
+
 ## Agent Sandbox
 
 [Agent Sandbox](https://github.com/ukchucktown/agent-sandbox) is the public
@@ -347,7 +397,7 @@ The split is intentional:
 - This repository owns the prompt, terminal styling, tmux behavior, editor
   configuration, local ports, and the list of host directories agents may see.
 - Credentials, agent histories, pairing state, and SSH host keys live in named
-  Docker volumes or ignored local files—not in either Git repository.
+  Docker volumes or ignored local files—not in any of these Git repositories.
 
 The Docker service and volumes retain the historical `agent-sandbox` name so
 existing installations can upgrade in place. Use the `./sandbox` launcher from
@@ -404,7 +454,7 @@ from inside the container. Each client's credentials, settings, plugins, and
 history remain private to the persistent container volume.
 
 Only mount directories that agents are allowed to read and modify. Agent
-Agent Sandbox intentionally does not mount the Docker socket, the rest of the home
+Sandbox intentionally does not mount the Docker socket, the rest of the home
 directory, host SSH configuration, or system credential stores.
 
 ### Operating Agent Sandbox
@@ -453,6 +503,9 @@ be deleted.
   quick-terminal behavior, split presentation, and local themes.
 - `.config/herdr/config.toml` — portable Herdr pane and tab-row behavior.
 - `.config/nvim` — Neovim 0.12 configuration and pinned native package lock.
+- `.config/yazi` — personal Yazi theme, navigation, and Markdown actions.
+- `.local/bin/md` and `.local/bin/terminal-viewer` — adapters for separately
+  installed Markdown and terminal-browser tools.
 - `.config/agent-sandbox/*.example` — versioned templates for ignored,
   machine-local environment and mount settings.
 

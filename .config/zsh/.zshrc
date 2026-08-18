@@ -55,6 +55,14 @@ source "$ZDOTDIR/functions.zsh"
 source "$ZDOTDIR/aliases.zsh"
 source "$ZDOTDIR/plugins.zsh"
 
+# Optional dotfile add-ons install self-contained shell fragments in the XDG
+# data directory. A personal setup has no add-on files, so cloning this
+# repository stays lean.
+for addon in "${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles-addons/"*.zsh(N); do
+  source "$addon"
+done
+unset addon
+
 export ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=110'
 
