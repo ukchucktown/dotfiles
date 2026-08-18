@@ -13,7 +13,7 @@ dotfiles repository's existing tools and Starship prompt.
 | `aliases.zsh` | Command, navigation, editor, Git, and local aliases |
 | `bindings.zsh` | Autosuggestion, history, navigation, and FZF bindings |
 | `fzf.zsh` | FZF defaults, previews, and file selection |
-| `functions.zsh` | User-facing shell functions |
+| `functions.zsh` | User-facing shell functions, including the Yazi launcher |
 | `plugins.zsh` | Small clone/source/update plugin loader |
 | `prompt.zsh` | Starship initialization |
 
@@ -26,7 +26,7 @@ inside this directory.
 Install the command-line dependencies on macOS with:
 
 ```sh
-brew install zsh neovim eza bat fd fzf zoxide starship ripgrep
+brew install zsh neovim eza bat fd fzf zoxide starship ripgrep yazi
 ```
 
 ## Plugins
@@ -59,7 +59,15 @@ zplugin-update
 | `Up` / `Down` | Search history by substring |
 | `Ctrl+Backslash` | Toggle autosuggestions |
 
+Run `y` to open Yazi and return the shell to the directory selected when Yazi
+exits. Press `Q` inside Yazi to quit without changing the shell directory.
+
 ## Machine-local configuration
 
 Machine-specific environment variables and credentials remain in
 `~/.zshrc.local`. The file is sourced early and should not be committed.
+
+Optional dotfile repositories can install shell fragments under
+`~/.local/share/dotfiles-addons` (or `$XDG_DATA_HOME/dotfiles-addons` when that
+variable is set). The directory is absent in the default personal setup, so
+add-on code is neither cloned nor stored unless it is installed separately.

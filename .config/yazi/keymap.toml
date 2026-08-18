@@ -1,0 +1,10 @@
+#:schema https://yazi-rs.github.io/schemas/keymap.json
+
+# Extend Yazi's defaults instead of copying them, so upstream navigation,
+# search, and file-operation improvements remain available after upgrades.
+[mgr]
+prepend_keymap = [
+	{ on = [ "g", "r" ], run = "cd ~/dotfiles", desc = "Go to dotfiles" },
+	{ on = [ "g", "w" ], run = "cd ~/Github",   desc = "Go to projects" },
+	{ on = "e", run = 'shell --block -- "$EDITOR" %h', desc = "Edit hovered file" },
+]

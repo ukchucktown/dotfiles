@@ -9,6 +9,7 @@ brew "fd"
 brew "zoxide"
 brew "ripgrep"
 brew "neovim"
+brew "yazi"
 
 # Terminal application and icon-capable font.
 cask "ghostty"

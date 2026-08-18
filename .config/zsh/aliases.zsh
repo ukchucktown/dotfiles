@@ -34,5 +34,15 @@ fi
 alias glog='PAGER="less -F -X" git log'
 alias gadog='PAGER="less -F -X" git log --all --decorate --oneline --graph'
 
+# Kubernetes
+alias k='kubectl'
+
 # Local tools
 alias gemini='NODE_OPTIONS="--no-deprecation" gemini'
+
+# Render Markdown through the GitHub-style preview inside Ghostty. Zsh suffix
+# aliases make a Markdown filename usable directly as a command.
+if command -v md >/dev/null 2>&1; then
+  alias -s md=md
+  alias -s markdown=md
+fi

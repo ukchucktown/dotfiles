@@ -1,0 +1,44 @@
+#:schema https://yazi-rs.github.io/schemas/yazi.json
+
+# Keep directories prominent, use natural ordering, and show the same compact
+# size context as the shell's `ll`/`la` listings.
+[mgr]
+ratio          = [ 1, 4, 3 ]
+sort_by        = "natural"
+sort_sensitive = false
+sort_reverse   = false
+sort_dir_first = true
+linemode       = "size"
+show_hidden    = false
+show_symlink   = true
+scrolloff      = 5
+
+# Ghostty handles Yazi's native image protocol. These limits keep previews
+# sharp without making the quick terminal feel sluggish.
+[preview]
+wrap          = "no"
+tab_size      = 2
+max_width     = 1000
+max_height    = 1000
+image_delay   = 30
+image_filter  = "triangle"
+image_quality = 80
+
+# Hand viewable text artifacts to their native terminal viewers. Blocking lets
+# each viewer own the terminal until it exits, then Yazi redraws itself.
+[opener]
+markdown = [
+	{ run = "$HOME/.local/bin/md %s1", block = true, desc = "Markdown preview" },
+]
+
+[open]
+prepend_rules = [
+	{ url = "*.md",       use = [ "markdown", "edit" ] },
+	{ url = "*.markdown", use = [ "markdown", "edit" ] },
+]
+
+# Keep the command prompt centered while leaving Yazi's other inputs at their
+# context-appropriate default positions.
+[input]
+shell_origin = "center"
+shell_offset = [ 0, 0, 60, 3 ]

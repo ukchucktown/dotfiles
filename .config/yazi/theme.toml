@@ -1,0 +1,145 @@
+#:schema https://yazi-rs.github.io/schemas/theme.json
+
+# Subliminal Nightfall, shared with Ghostty, tmux, Starship, FZF, and Eza.
+# Leave the app background unset so Ghostty's transparency remains visible.
+[mgr]
+cwd             = { fg = "#82d6d6", bold = true }
+find_keyword    = { fg = "#ffd266", bold = true, underline = true }
+find_position   = { fg = "#ffc8ce", italic = true }
+symlink_target  = { fg = "#f1a5ab", italic = true }
+marker_copied   = { fg = "#a9cfa4", bg = "#a9cfa4" }
+marker_cut      = { fg = "#bf616a", bg = "#bf616a" }
+marker_marked   = { fg = "#82d6d6", bg = "#82d6d6" }
+marker_selected = { fg = "#ffd266", bg = "#ffd266" }
+marker_symbol   = "▌"
+count_copied    = { fg = "#03021a", bg = "#a9cfa4", bold = true }
+count_cut       = { fg = "#ffffff", bg = "#bf616a", bold = true }
+count_selected  = { fg = "#03021a", bg = "#ffd266", bold = true }
+border_symbol   = "│"
+border_style    = { fg = "#2b2e48" }
+
+[tabs]
+active    = { fg = "#ffd266", bg = "reset", bold = true }
+inactive  = { fg = "#a9b1d6", bg = "reset" }
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+[mode]
+normal_main = { fg = "#03021a", bg = "#5fb3b3", bold = true }
+normal_alt  = { fg = "#82d6d6", bg = "#15142d" }
+select_main = { fg = "#03021a", bg = "#ffd266", bold = true }
+select_alt  = { fg = "#ffd266", bg = "#15142d" }
+unset_main  = { fg = "#ffffff", bg = "#bf616a", bold = true }
+unset_alt   = { fg = "#e2848d", bg = "#15142d" }
+
+[indicator]
+parent  = { fg = "#ffd266", bold = true }
+current = { fg = "#ffd266", bold = true }
+preview = { fg = "#ffd266", bold = true }
+padding = { open = "▐", close = "▌" }
+
+[status]
+sep_left        = { open = "", close = "" }
+sep_right       = { open = "", close = "" }
+perm_sep        = { fg = "#7f7f7f" }
+perm_type       = { fg = "#a9cfa4" }
+perm_read       = { fg = "#ffd266" }
+perm_write      = { fg = "#e2848d" }
+perm_exec       = { fg = "#82d6d6" }
+progress_label  = { fg = "#e0def4", bold = true }
+progress_normal = { fg = "#5fb3b3", bg = "#2b2e48" }
+progress_error  = { fg = "#ffd266", bg = "#bf616a" }
+
+[which]
+cols            = 3
+mask            = { bg = "#15142d" }
+cand            = { fg = "#82d6d6", bold = true }
+rest            = { fg = "#7f7f7f" }
+desc            = { fg = "#ffc8ce" }
+separator       = "  "
+separator_style = { fg = "#2b2e48" }
+
+[confirm]
+border  = { fg = "#6699cc" }
+title   = { fg = "#89bcef", bold = true }
+btn_yes = { fg = "#03021a", bg = "#a9cfa4", bold = true }
+btn_no  = { fg = "#7f7f7f" }
+
+[spot]
+border   = { fg = "#6699cc" }
+title    = { fg = "#89bcef", bold = true }
+tbl_col  = { fg = "#82d6d6" }
+tbl_cell = { fg = "#ffd266" }
+
+[notify]
+title_info  = { fg = "#a9cfa4" }
+title_warn  = { fg = "#ffd266" }
+title_error = { fg = "#e2848d" }
+
+[pick]
+border   = { fg = "#6699cc" }
+active   = { fg = "#82d6d6", bold = true }
+inactive = { fg = "#e0def4" }
+
+[input]
+border   = { fg = "#6699cc" }
+title    = { fg = "#89bcef", bold = true }
+value    = { fg = "#e0def4" }
+selected = { fg = "#ffffff", bg = "#484e5b" }
+
+[cmp]
+border   = { fg = "#6699cc" }
+active   = { fg = "#ffffff", bg = "#484e5b", bold = true }
+inactive = { fg = "#e0def4" }
+
+[tasks]
+border  = { fg = "#6699cc" }
+title   = { fg = "#89bcef", bold = true }
+hovered = { fg = "#82d6d6", bold = true }
+
+[help]
+on      = { fg = "#82d6d6" }
+run     = { fg = "#ffc8ce" }
+desc    = { fg = "#e0def4" }
+hovered = { fg = "#ffffff", bg = "#484e5b", bold = true }
+footer  = { fg = "#03021a", bg = "#d4d4d4" }
+
+# Mirror the shell's Eza palette: directories use bold ANSI cyan while the
+# other file categories retain their Nightfall semantic colors.
+[filetype]
+rules = [
+	{ mime = "image/*", fg = "#ffd266" },
+	{ mime = "{audio,video}/*", fg = "#ffc8ce" },
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#e2848d" },
+	{ mime = "application/{pdf,doc,rtf}", fg = "#82d6d6" },
+	{ mime = "vfs/{absent,stale}", fg = "#7f7f7f" },
+	{ url = "*", is = "orphan", fg = "#ffffff", bg = "#bf616a" },
+	{ url = "*", is = "exec", fg = "#e2848d" },
+	{ url = "*", is = "dummy", bg = "#bf616a" },
+	{ url = "*/", is = "dummy", bg = "#bf616a" },
+	{ url = "*/", fg = "cyan", bold = true },
+]
+
+# Keep Yazi's special folder glyphs, but give every directory icon the same
+# ANSI cyan used by directory names and Eza.
+[icon]
+dirs = [
+	{ name = ".config",     text = "", fg = "cyan" },
+	{ name = ".git",        text = "", fg = "cyan" },
+	{ name = ".github",     text = "", fg = "cyan" },
+	{ name = ".npm",        text = "", fg = "cyan" },
+	{ name = "Desktop",     text = "", fg = "cyan" },
+	{ name = "Development", text = "", fg = "cyan" },
+	{ name = "Documents",   text = "", fg = "cyan" },
+	{ name = "Downloads",   text = "", fg = "cyan" },
+	{ name = "Library",     text = "", fg = "cyan" },
+	{ name = "Movies",      text = "", fg = "cyan" },
+	{ name = "Music",       text = "", fg = "cyan" },
+	{ name = "Pictures",    text = "", fg = "cyan" },
+	{ name = "Public",      text = "", fg = "cyan" },
+	{ name = "Videos",      text = "", fg = "cyan" },
+]
+prepend_conds = [
+	{ if = "dir & hovered", text = "", fg = "cyan" },
+	{ if = "dir",           text = "", fg = "cyan" },
+]
