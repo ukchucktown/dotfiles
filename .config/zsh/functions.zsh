@@ -41,7 +41,15 @@ fi
 
 # Capture help without allowing commands such as Git to launch their own pager.
 _man_help_capture() {
+  local executable="${1:t}"
+  local -i help_status
+
   PAGER=cat MANPAGER=cat GIT_PAGER=cat command "$@" --help 2>&1
+  help_status=$?
+
+  # npm prints valid top-level help but exits 1 when no command was supplied.
+  [[ "$executable" == npm && $# == 1 && $help_status == 1 ]] && return 0
+  return "$help_status"
 }
 
 _man_help_colorize() {
@@ -53,16 +61,100 @@ _man_help_colorize() {
     -e $'s#(^|[^[:alnum:]_-])(-{1,2}[[:alpha:]][[:alnum:]_-]*)#\\1\e[33m\\2\e[0m#g'
 }
 
-# Extract the command rows emitted by Cobra-style help, including kubectl's
-# grouped top-level commands and the conventional "Available Commands" block.
+# Extract browsable children from the current help page. Most tools use a
+# Cobra-style command table; npm uses a comma-separated top-level list and
+# Usage lines for nested commands, while c8ctl also exposes resource tables.
 _man_help_subcommands() {
-  LC_ALL=C awk '
+  local executable="${1:t}"
+  local -i include_resources=0
+  shift
+
+  if [[ "$executable" == npm ]]; then
+    LC_ALL=C awk -v path_depth="$#" '
+      /^All commands:$/ {
+        in_all_commands = 1
+        next
+      }
+
+      in_all_commands {
+        line = $0
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+
+        if (line == "") {
+          if (saw_all_command) {
+            in_all_commands = 0
+          }
+          next
+        }
+
+        count = split(line, commands, /,[[:space:]]*/)
+        for (i = 1; i <= count; i++) {
+          name = commands[i]
+          gsub(/^[[:space:]]+|[[:space:]]+$/, "", name)
+          if (name ~ /^[[:alnum:]][[:alnum:]_-]*$/ && !seen[name]++) {
+            printf "%s\t%s\n", name, "npm " name " --help"
+            saw_all_command = 1
+          }
+        }
+        next
+      }
+
+      /^Usage:$/ {
+        in_usage = 1
+        next
+      }
+
+      in_usage && /^npm[[:space:]]/ {
+        usage_count++
+        usage[usage_count] = $0
+        next
+      }
+
+      in_usage && usage_count && !/^npm[[:space:]]/ {
+        in_usage = 0
+      }
+
+      END {
+        if (saw_all_command) {
+          exit
+        }
+
+        child_field = path_depth + 2
+        for (i = 1; i <= usage_count; i++) {
+          field_count = split(usage[i], fields, /[[:space:]]+/)
+          if (field_count < child_field) {
+            continue
+          }
+
+          name = fields[child_field]
+          if (name !~ /^[[:alnum:]][[:alnum:]_-]*$/ || seen[name]++) {
+            continue
+          }
+
+          description = usage[i]
+          sub(/^npm[[:space:]]+/, "", description)
+          printf "%s\t%s\n", name, description
+        }
+      }
+    '
+    return
+  fi
+
+  [[ "$executable" == c8ctl ]] && include_resources=1
+  LC_ALL=C awk -v include_resources="$include_resources" '
     /^(Commands|Subcommands|[^[:space:]].*[[:space:]]Commands([[:space:]]+\([^)]*\))?):$/ {
       in_commands = 1
+      in_resources = 0
       next
     }
 
-    in_commands && /^  [[:alnum:]][[:alnum:]_-]*([[:space:]]|$)/ {
+    include_resources && /^(Resources|Resources and their available flags):$/ {
+      in_commands = 0
+      in_resources = 1
+      next
+    }
+
+    (in_commands || in_resources) && /^  [[:alnum:]][[:alnum:]_-]*([[:space:]]|$)/ {
       line = $0
       sub(/^[[:space:]]+/, "", line)
       name = line
@@ -76,8 +168,9 @@ _man_help_subcommands() {
       next
     }
 
-    in_commands && /^[^[:space:]]/ {
+    (in_commands || in_resources) && /^[^[:space:]]/ {
       in_commands = 0
+      in_resources = 0
     }
   '
 }
@@ -125,10 +218,10 @@ _man_help_browser() {
       return 1
     fi
 
-    if [[ -n "$parent_help_output" && "$help_output" == "$parent_help_output" ]]; then
+    if [[ "${executable:t}" != npm && -n "$parent_help_output" && "$help_output" == "$parent_help_output" ]]; then
       subcommands=''
     else
-      subcommands=$(print -r -- "$help_output" | _man_help_subcommands)
+      subcommands=$(print -r -- "$help_output" | _man_help_subcommands "$executable" "${command_path[@]}")
     fi
     invocation="${(j: :)${:-$executable $command_path}}"
 
@@ -245,7 +338,7 @@ _man_search() {
       help_output=$(_man_help_capture "$selected" "${command_args[@]}")
       help_status=$?
       if (( help_status == 0 )) && [[ -n "$help_output" ]]; then
-        subcommands=$(print -r -- "$help_output" | _man_help_subcommands)
+        subcommands=$(print -r -- "$help_output" | _man_help_subcommands "$selected" "${command_args[@]}")
         if [[ -n "$subcommands" ]] && (( $+commands[fzf] )); then
           _man_help_browser "$selected" "${command_args[@]}"
           return

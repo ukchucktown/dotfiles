@@ -37,6 +37,9 @@ jobs:
       - name: Test the man-page pager
         run: zsh tests/manpager.zsh
 
+      - name: Test the terminal viewer adapter
+        run: zsh tests/terminal-viewer.zsh
+
       - name: Validate Starship configuration
         env:
           STARSHIP_CONFIG: .config/starship.toml

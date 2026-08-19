@@ -8,4 +8,4 @@ patch_script="$script_dir/../share/terminal-viewer/patch-terminal-browser-quit.m
 
 node "$patch_script"
 
-exec "$HOME/.local/bin/terminal-browser" "$@" --partition=terminal-viewer
+exec "$HOME/.local/bin/terminal-browser" "$@" --partition=terminal-viewer --presentation

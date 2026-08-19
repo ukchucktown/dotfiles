@@ -41,3 +41,15 @@ keybind=cmd+9=unbind
 # Split navigation for mouse button mappings
 keybind=cmd+alt+]=goto_split:next
 keybind=cmd+alt+[=goto_split:previous
+
+# tmux window controls (Caps Lock emits Hyper: Cmd+Ctrl+Option+Shift)
+keybind=cmd+ctrl+alt+shift+left=text:\x02p
+keybind=cmd+ctrl+alt+shift+right=text:\x02n
+# Lighter transport for synthetic MX Master thumb-wheel keystrokes.
+keybind=cmd+alt+left=text:\x02p
+keybind=cmd+alt+right=text:\x02n
+keybind=cmd+ctrl+alt+shift+n=text:\x02c
+keybind=cmd+ctrl+alt+shift+r=text:\x02,
+# Use Hyper+K as the primary kill-window shortcut; Backspace is retained as an alias.
+keybind=cmd+ctrl+alt+shift+k=text:\x02&
+keybind=cmd+ctrl+alt+shift+backspace=text:\x02&
