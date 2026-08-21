@@ -8,6 +8,7 @@ brew "bat"
 brew "fd"
 brew "zoxide"
 brew "ripgrep"
+brew "fnm"
 brew "neovim"
 brew "yazi"
 

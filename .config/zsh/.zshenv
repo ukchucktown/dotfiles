@@ -45,4 +45,4 @@ fi
 
 # Map file types to ANSI palette slots; Ghostty's active theme supplies the
 # actual RGB values. This keeps eza colors identical inside and outside tmux.
-export EZA_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
+export EZA_COLORS='reset:di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'

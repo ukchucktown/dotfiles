@@ -6,6 +6,11 @@ if [[ -r "$HOME/.zshrc.local" ]]; then
   source "$HOME/.zshrc.local"
 fi
 
+# Use the project-pinned Node version when .nvmrc or .node-version is present.
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env --use-on-cd --shell zsh)"
+fi
+
 # History
 HISTFILE="$XDG_STATE_HOME/zsh/history"
 HISTSIZE=100000

@@ -4,6 +4,7 @@ This configuration keeps Yazi aligned with the rest of the terminal setup:
 
 - `theme.toml` uses the active Subliminal Nightfall colors from Ghostty and
   leaves the application background transparent.
+- `init.lua` disables file and directory icons in Yazi's manager panes.
 - `yazi.toml` uses natural, directory-first sorting and a compact size column.
 - `keymap.toml` extends the built-in keymap with `g r` for `~/dotfiles`,
   `g w` for `~/Github`, and `e` to edit the hovered file in `$EDITOR`.
