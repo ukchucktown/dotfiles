@@ -119,27 +119,3 @@ rules = [
 	{ url = "*/", is = "dummy", bg = "#bf616a" },
 	{ url = "*/", fg = "cyan", bold = true },
 ]
-
-# Keep Yazi's special folder glyphs, but give every directory icon the same
-# ANSI cyan used by directory names and Eza.
-[icon]
-dirs = [
-	{ name = ".config",     text = "", fg = "cyan" },
-	{ name = ".git",        text = "", fg = "cyan" },
-	{ name = ".github",     text = "", fg = "cyan" },
-	{ name = ".npm",        text = "", fg = "cyan" },
-	{ name = "Desktop",     text = "", fg = "cyan" },
-	{ name = "Development", text = "", fg = "cyan" },
-	{ name = "Documents",   text = "", fg = "cyan" },
-	{ name = "Downloads",   text = "", fg = "cyan" },
-	{ name = "Library",     text = "", fg = "cyan" },
-	{ name = "Movies",      text = "", fg = "cyan" },
-	{ name = "Music",       text = "", fg = "cyan" },
-	{ name = "Pictures",    text = "", fg = "cyan" },
-	{ name = "Public",      text = "", fg = "cyan" },
-	{ name = "Videos",      text = "", fg = "cyan" },
-]
-prepend_conds = [
-	{ if = "dir & hovered", text = "", fg = "cyan" },
-	{ if = "dir",           text = "", fg = "cyan" },
-]

@@ -5,6 +5,41 @@ dotfiles() {
   git -C "$HOME/dotfiles" "$@"
 }
 
+# Initialize a directory as an Obsidian vault with the tracked appearance
+# defaults, then open it in the desktop application.
+ovault() {
+  local target="${1:-$PWD}"
+  local defaults="${XDG_CONFIG_HOME:-$HOME/.config}/obsidian/vault-defaults"
+
+  if (( $# > 1 )); then
+    print -u2 -- 'usage: ovault [directory]'
+    return 2
+  fi
+
+  if [[ ! -d "$defaults" ]]; then
+    print -u2 -- "ovault: defaults not found: $defaults"
+    return 1
+  fi
+
+  target="${target:A}"
+  command mkdir -p -- "$target" || return
+
+  if [[ -e "$target/.obsidian" ]]; then
+    print -u2 -- "ovault: already initialized: $target"
+    return 1
+  fi
+
+  command mkdir -- "$target/.obsidian" || return
+  command rsync -a -- "$defaults/" "$target/.obsidian/" || return
+
+  print -- "Initialized Obsidian vault: $target"
+  command open -a Obsidian "$target"
+}
+
+if (( $+functions[compdef] )); then
+  compdef _directories ovault
+fi
+
 # Launch Yazi and follow its final directory when it exits. Pressing `Q` in
 # Yazi skips the directory change; the usual `q` applies it.
 y() {
@@ -62,12 +97,64 @@ _man_help_colorize() {
 }
 
 # Extract browsable children from the current help page. Most tools use a
-# Cobra-style command table; npm uses a comma-separated top-level list and
-# Usage lines for nested commands, while c8ctl also exposes resource tables.
+# Cobra-style command table; Git and GitHub CLI use categorized rows, npm uses
+# a comma-separated top-level list and Usage lines for nested commands, while
+# c8ctl also exposes resource tables.
 _man_help_subcommands() {
   local executable="${1:t}"
   local -i include_resources=0
   shift
+
+  if [[ "$executable" == gh ]]; then
+    LC_ALL=C awk '
+      /^[[:upper:] ][[:upper:] ]*COMMANDS$/ {
+        in_commands = 1
+        next
+      }
+
+      in_commands && /^  [[:alnum:]][[:alnum:]_-]*:/ {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+        name = line
+        sub(/:.*/, "", name)
+        description = line
+        sub(/^[^:]+:[[:space:]]*/, "", description)
+
+        if (!seen[name]++) {
+          printf "%s\t%s\n", name, description
+        }
+        next
+      }
+
+      in_commands && /^[[:upper:]][[:upper:] ]*$/ {
+        in_commands = 0
+      }
+    '
+    return
+  fi
+
+  if [[ "$executable" == git && $# == 0 ]]; then
+    LC_ALL=C awk '
+      /^These are common Git commands used in various situations:$/ {
+        in_commands = 1
+        next
+      }
+
+      in_commands && /^   [[:alnum:]][[:alnum:]_-]*[[:space:]]/ {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+        name = line
+        sub(/[[:space:]].*$/, "", name)
+        description = line
+        sub(/^[^[:space:]]+[[:space:]]+/, "", description)
+
+        if (!seen[name]++) {
+          printf "%s\t%s\n", name, description
+        }
+      }
+    '
+    return
+  fi
 
   if [[ "$executable" == npm ]]; then
     LC_ALL=C awk -v path_depth="$#" '
