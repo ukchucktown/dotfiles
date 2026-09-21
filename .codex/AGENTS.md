@@ -16,6 +16,18 @@ code changes start.
 - Do not create an implementation branch or worktree directly with Git or
   Supacode.
 
+## Skill updates
+
+Use the manager that manages the installed skill.
+
+- When `npx skills` manages the skill, run `npx skills update <skill> --global
+  --yes` for a global installation or `npx skills update <skill> --project
+  --yes` for a project installation.
+- When another manager manages the installation, use that manager's update
+  command.
+- Inspect the installation metadata only when the manager or the scope is
+  unknown.
+
 ## Git worktrees
 
 For a repository at `/Users/grant.lewis/Github/<repository>`, create every task worktree with Supacode under `/Users/grant.lewis/Github/worktrees/<repository>/<worktree-name>`.
