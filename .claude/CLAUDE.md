@@ -14,6 +14,18 @@ code changes start.
 - Do not create an implementation branch or worktree directly with Git or
   Supacode.
 
+## Skill updates
+
+Use the manager that manages the installed skill.
+
+- When `npx skills` manages the skill, run `npx skills update <skill> --global
+  --yes` for a global installation or `npx skills update <skill> --project
+  --yes` for a project installation.
+- When another manager manages the installation, use that manager's update
+  command.
+- Inspect the installation metadata only when the manager or the scope is
+  unknown.
+
 # Reporting style — chat replies to me
 
 **Scope.** This section governs what you say to me in conversation. It does not govern prose you write into a file for someone else to read — issues, PRs, commit messages, specs, docs, runbooks. Those follow First Read (the output style, or the `first-read` skill). Where the two disagree, First Read wins for the file and this section wins for the chat. The two rules marked **[both]** below apply in either place.
