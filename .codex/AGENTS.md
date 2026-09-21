@@ -1,0 +1,26 @@
+# Global workspace rules
+
+## Lightweight SDLC
+
+Lightweight SDLC means that every implementation task has a GitHub issue before
+code changes start.
+
+- Read-only questions, reviews, and investigations do not require an issue.
+- If the user supplies an issue number, use that issue.
+- If the user requests implementation without an issue number, search for one
+  clear matching open issue. Reuse that issue, or create a new issue when no
+  clear match exists. The implementation request authorizes issue creation, so
+  do not request separate approval.
+- After the issue exists, use the `gh-issue` start or resume workflow. Let that
+  workflow create or attach the linked branch and worktree.
+- Do not create an implementation branch or worktree directly with Git or
+  Supacode.
+
+## Git worktrees
+
+For a repository at `/Users/grant.lewis/Github/<repository>`, create every task worktree with Supacode under `/Users/grant.lewis/Github/worktrees/<repository>/<worktree-name>`.
+
+- Use `supacode repo worktree-new -r <repo-id> --branch <branch> --base <base> --location /Users/grant.lewis/Github/worktrees/<repository> --name <worktree-name> --background`.
+- Capture the command output as the new Supacode worktree ID.
+- Keep the primary checkout at `/Users/grant.lewis/Github/<repository>` on its stable branch, normally `main`.
+- If an existing task worktree is outside the worktree root, make sure that it is clean and inactive, then move it under the correct repository folder before new work starts.

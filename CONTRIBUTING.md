@@ -32,6 +32,7 @@ Run the checks that match the files you changed:
 zsh -n .zshenv .zshrc .config/zsh/*.zsh .config/zsh/.zshenv .config/zsh/.zshrc
 zsh tests/manpager.zsh
 zsh tests/terminal-viewer.zsh
+zsh tests/agent-instructions.zsh
 
 target="$(mktemp -d)"
 mkdir -p "$target/.config"
