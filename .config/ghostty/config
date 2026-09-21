@@ -9,6 +9,8 @@ macos-option-as-alt=true
 window-decoration=false
 macos-window-shadow=true
 shell-integration=zsh
+# Let the custom Zsh directory title control tab names.
+shell-integration-features=no-title
 quick-terminal-position=top
 quick-terminal-screen=mouse
 quick-terminal-size=50%
@@ -18,7 +20,7 @@ window-inherit-working-directory=false
 working-directory=home
 window-padding-x=15
 window-padding-y=15
-window-padding-balance=true
+window-padding-balance=false
 
 # key bindings
 keybind=global:cmd+grave_accent=toggle_quick_terminal
