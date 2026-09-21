@@ -33,6 +33,7 @@ zsh -n .zshenv .zshrc .config/zsh/*.zsh .config/zsh/.zshenv .config/zsh/.zshrc
 zsh tests/manpager.zsh
 zsh tests/terminal-viewer.zsh
 zsh tests/agent-instructions.zsh
+python3 tests/markdown-theme.py
 
 target="$(mktemp -d)"
 mkdir -p "$target/.config"
@@ -41,6 +42,12 @@ stow --simulate --verbose --target="$target" --no-folding .
 
 Also start a fresh Zsh session and verify any visual change in Ghostty, tmux,
 and a plain terminal session where applicable.
+
+With `mdterm` installed, check the generated Markdown preview themes:
+
+```sh
+python3 tests/markdown-theme.py --mdterm "$HOME/.local/bin/mdterm"
+```
 
 ## Pull requests
 

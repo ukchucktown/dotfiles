@@ -32,7 +32,11 @@ if (( $# != 1 )); then
   exit 2
 fi
 
+script_dir="${0:A:h}"
+theme="$(node "$script_dir/../share/terminal-viewer/markdown-theme.mjs")" || exit $?
+
 exec "$HOME/.local/bin/mdterm" \
+  --theme "$theme" \
   --preview \
   --viewer "$HOME/.local/bin/terminal-viewer" \
   -- "$1"

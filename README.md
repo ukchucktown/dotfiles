@@ -371,6 +371,12 @@ separately installed `mdterm` and `terminal-browser`; those three tools are not
 installed by this repository's `Brewfile`. Yazi navigation and editing remain
 usable without them.
 
+The Markdown preview selects a light or dark theme from the terminal background
+when it opens. If the terminal does not report its background, the preview uses
+`COLORFGBG`, then dark as the default. Use `MD_THEME=light md FILE.md` or
+`MD_THEME=dark md FILE.md` to select a theme manually. After a terminal theme
+change, close and reopen the preview.
+
 See the [Yazi configuration guide](.config/yazi/README.md) for the local
 keybindings and preview requirements.
 
