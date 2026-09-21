@@ -30,9 +30,14 @@ Use the manager that manages the installed skill.
 
 ## Git worktrees
 
-For a repository at `/Users/grant.lewis/Github/<repository>`, create every task worktree with Supacode under `/Users/grant.lewis/Github/worktrees/<repository>/<worktree-name>`.
+For a repository at `$HOME/Github/<repository>`, create every task worktree
+with Supacode under
+`$HOME/Github/worktrees/<repository>/<worktree-name>`.
 
-- Use `supacode repo worktree-new -r <repo-id> --branch <branch> --base <base> --location /Users/grant.lewis/Github/worktrees/<repository> --name <worktree-name> --background`.
+- Use `supacode repo worktree-new -r <repo-id> --branch <branch> --base <base>
+  --location "$HOME/Github/worktrees/<repository>" --name <worktree-name>
+  --background`.
 - Capture the command output as the new Supacode worktree ID.
-- Keep the primary checkout at `/Users/grant.lewis/Github/<repository>` on its stable branch, normally `main`.
+- Keep the primary checkout at `$HOME/Github/<repository>` on its stable
+  branch, normally `main`.
 - If an existing task worktree is outside the worktree root, make sure that it is clean and inactive, then move it under the correct repository folder before new work starts.
