@@ -92,7 +92,7 @@ Already have dotfiles? Start with one component instead of adopting everything:
 | File manager | `.config/yazi` and the `y` wrapper in `.config/zsh/functions.zsh` |
 | Camunda artifacts | Separate [`dotfiles-camunda`](https://github.com/ukchucktown/dotfiles-camunda) add-on |
 | Agent companion | `.config/agent-sandbox` plus the [Agent Sandbox setup](https://github.com/ukchucktown/agent-sandbox#requirements) |
-| Global agent instructions | `.codex/AGENTS.md` and `.claude/CLAUDE.md` |
+| Global agent instructions | Shared `.agents/AGENTS.md` linked into Codex, Claude, and Copilot |
 
 ## How the configuration fits together
 
