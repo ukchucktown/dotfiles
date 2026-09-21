@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Build a native tmux menu from the windows in the clicked client's session.
+client_name=$1
+target_pane=$2
+menu_x=$3
+
+# Resolve this after the shell starts so tmux IDs such as "$5" are not
+# mistaken for positional shell parameters in the mouse binding.
+session_id=$(tmux display-message -c "$client_name" -p '#{session_id}') || exit 1
+
+window_list=$(mktemp "${TMPDIR:-/tmp}/tmux-window-menu.XXXXXX") || exit 1
+trap 'rm -f "$window_list"' EXIT HUP INT TERM
+
+tab=$(printf '\t')
+tmux list-windows -t "$session_id" \
+  -F "#{window_id}${tab}#{window_index}${tab}#{window_name}${tab}#{window_active}" \
+  > "$window_list"
+
+set --
+choice=0
+active_choice=0
+while IFS="$tab" read -r window_id window_index window_name window_active; do
+  label="$window_index: $window_name"
+
+  [ "$window_active" = 1 ] && active_choice=$choice
+
+  case $window_index in
+    [1-9]) shortcut=$window_index ;;
+    *) shortcut= ;;
+  esac
+
+  set -- "$@" "$label" "$shortcut" "select-window -t $window_id"
+  choice=$((choice + 1))
+done < "$window_list"
+
+[ "$#" -gt 0 ] || exit 0
+
+tmux display-menu -OM \
+  -c "$client_name" \
+  -t "$target_pane" \
+  -T '#[align=centre]#{window_index}:#{window_name}' \
+  -C "$active_choice" \
+  -x "$menu_x" \
+  -y S \
+  -s 'fg=#a9b1d6,bg=#15142d' \
+  -S 'fg=#484e5b,bg=#15142d' \
+  -H 'fg=#03021a,bg=#e0af68,bold' \
+  "$@"
