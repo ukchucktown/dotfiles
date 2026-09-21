@@ -318,9 +318,13 @@ ln -s "$HOME/dotfiles/.config/ghostty" "$HOME/.config/ghostty"
 ln -s "$HOME/dotfiles/.config/herdr" "$HOME/.config/herdr"
 ln -s "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
 ln -s "$HOME/dotfiles/.config/yazi" "$HOME/.config/yazi"
-ln -s "$HOME/dotfiles/.config/zed" "$HOME/.config/zed"
+mkdir -p "$HOME/.config/zed"
+ln -s "$HOME/dotfiles/.config/zed/themes" "$HOME/.config/zed/themes"
 ln -s "$HOME/dotfiles/.config/agent-sandbox" "$HOME/.config/agent-sandbox"
 ```
+
+Zed settings stay local to each machine. Git and Stow exclude
+`.config/zed/settings*.json`; only the shared themes are linked.
 
 The MacBook `.tmux.conf` sources the shared tmux configuration from
 `~/.config/agent-sandbox/shell/tmux.conf`. Agent Sandbox mounts that same file
