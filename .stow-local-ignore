@@ -28,6 +28,7 @@ _darcs
 ^/\.config/agent-sandbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
 ^/\.config/herdr/(\.plugins\.lock|.*\.log|.*\.sock|session\.json)$
 ^/\.config/zsh/plugins(/.*)?$
+^/\.config/zed/settings[^/]*\.json$
 ^/\.config/zed/prompts(/.*)?$
 ^/\.ideavimrc$
 ^/agent-shell(/.*)?$

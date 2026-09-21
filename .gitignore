@@ -17,4 +17,5 @@
 .config/herdr/*.sock
 .config/herdr/.plugins.lock
 .config/herdr/session.json
+.config/zed/settings*.json
 .config/zed/prompts/
