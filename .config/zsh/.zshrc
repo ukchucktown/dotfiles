@@ -85,15 +85,39 @@ if command -v kubectl >/dev/null 2>&1; then
   compdef _kubectl kubectl k
 fi
 
+c8ctl_completion="${C8CTL_DATA_DIR:-$HOME/Library/Application Support/c8ctl}/completions/c8ctl.zsh"
+if [[ -r "$c8ctl_completion" ]]; then
+  source "$c8ctl_completion"
+fi
+unset c8ctl_completion
+
 source "$ZDOTDIR/prompt.zsh"
 
 # Keep the terminal tab title synchronized with the current directory.
 set_tab_title() {
+  local tab_title="$PWD"
   if [[ "$PWD" == "$HOME" ]]; then
-    print -n -- $'\e]0;~\a'
-  else
-    print -n -- $'\e]0;'"$PWD"$'\a'
+    tab_title='~'
+  elif [[ "$PWD" == "$HOME/"* ]]; then
+    tab_title="~/${PWD#"$HOME/"}"
   fi
+
+  # Approximate the tab's available space; the shell cannot read its width.
+  local -i tab_title_limit=40
+  # Keep two folders when they fit, otherwise preserve the final folder in full.
+  local -a title_parts
+  title_parts=("${(@s:/:)tab_title}")
+  if (( ${#title_parts} > 3 || (${#title_parts} > 2 && ${#tab_title} > tab_title_limit) )); then
+    local title_prefix='.../'
+    if [[ "$PWD" == "$HOME/"* ]]; then
+      title_prefix='~/.../'
+    fi
+    tab_title="${title_prefix}${PWD:h:t}/${PWD:t}"
+    if (( ${#tab_title} > tab_title_limit )); then
+      tab_title="${title_prefix}${PWD:t}"
+    fi
+  fi
+  print -n -- $'\e]0;'"$tab_title"$'\a'
 }
 
 set_tab_title_precmd() {

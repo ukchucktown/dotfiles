@@ -39,6 +39,7 @@ alias k='kubectl'
 
 # Local tools
 alias gemini='NODE_OPTIONS="--no-deprecation" gemini'
+alias lw='npx lampwright'
 
 # Render Markdown through the GitHub-style preview inside Ghostty. Zsh suffix
 # aliases make a Markdown filename usable directly as a command.
