@@ -92,6 +92,7 @@ Already have dotfiles? Start with one component instead of adopting everything:
 | File manager | `.config/yazi` and the `y` wrapper in `.config/zsh/functions.zsh` |
 | Camunda artifacts | Separate [`dotfiles-camunda`](https://github.com/ukchucktown/dotfiles-camunda) add-on |
 | Agent companion | `.config/agent-sandbox` plus the [Agent Sandbox setup](https://github.com/ukchucktown/agent-sandbox#requirements) |
+| Global agent instructions | `.codex/AGENTS.md` and `.claude/CLAUDE.md` |
 
 ## How the configuration fits together
 
@@ -270,6 +271,12 @@ state in the real home directory. The tracked `.stow-local-ignore` provides an
 additional guard against linking known machine-local files from an older
 checkout; Git and Stow use separate ignore files, so both must be updated when
 an application introduces a new kind of generated state.
+
+The same rule protects agent state. This repository manages only
+`~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`. The `.codex` and `.claude`
+directories stay in the home directory, where the agents can manage their
+credentials, histories, caches, sessions, databases, and generated settings.
+Back up or remove existing instruction files before the first Stow operation.
 
 After pulling changes, preview and refresh the managed links with:
 
