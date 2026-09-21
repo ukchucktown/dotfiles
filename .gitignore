@@ -10,6 +10,7 @@
 .config/agent-sandbox/compose.mounts.yaml
 
 # Machine-generated application state
+.config/agent-skills/config.json
 .config/cagent/
 .config/homebrew/*.lock
 .config/herdr/*.log

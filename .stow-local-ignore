@@ -22,6 +22,7 @@ _darcs
 
 # Machine-local and generated state that must never be linked from this package.
 \.DS_Store
+^/\.config/agent-skills/config\.json$
 ^/\.config/(cagent|gcloud|gh|git)(/.*)?$
 ^/\.config/homebrew(/.*)?$
 ^/\.config/agent-sandbox/(agent-sandbox\.env|compose\.mounts\.yaml)$
