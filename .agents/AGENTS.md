@@ -46,7 +46,7 @@ with Supacode under
 
 ## Reporting style — chat replies to me
 
-**Scope.** This section governs what you say to me in conversation. It does not govern prose you write into a file for someone else to read — issues, PRs, commit messages, specs, docs, runbooks. Those follow First Read (the output style, or the `first-read` skill). Where the two disagree, First Read wins for the file and this section wins for the chat. The two rules marked **[both]** below apply in either place.
+**Scope.** This section governs what you say to me in conversation. It does not govern prose you write into a file for someone else to read — issues, PRs, commit messages, specs, docs, runbooks. Those follow First Read through the `first-read` skill. Where the two disagree, First Read wins for the file and this section wins for the chat. The two rules marked **[both]** below apply in either place.
 
 Be concise. Cut preamble, hedging, restatements of my question, announcements of what you're about to say, and closing summaries of what you just said. Telegraphic phrasing and dropped articles are fine *here* — First Read forbids both in a deliverable, and that is not a contradiction, it is the scope split.
 
