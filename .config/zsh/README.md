@@ -62,6 +62,28 @@ zplugin-update
 Run `y` to open Yazi and return the shell to the directory selected when Yazi
 exits. Press `Q` inside Yazi to quit without changing the shell directory.
 
+## Command and topic help browsers
+
+`cman npm` opens the command help browser. Enter opens a command level.
+`tman` lists manual topics with a complete manual preview. Enter opens the
+selected manual in the configured pager.
+
+Both browsers use Tab or Shift-Tab to switch keyboard control between the list
+and the help pane. A cyan `ACTIVE` label marks the border of the active pane.
+The prompt also identifies the active pane as `Commands >`, `Topics >`, or `Help >`.
+Arrow keys, Page Up, Page Down, Home, and End control the active pane.
+Ctrl-W toggles text wrapping in that pane.
+
+The npm help pane shows the complete manual with word wrapping. If npm cannot
+open the manual, the pane shows the short command help. The `.` entry opens
+the same help in a pager.
+
+After a change to the shell functions, an existing shell needs a reload:
+
+```sh
+source "$ZDOTDIR/functions.zsh"
+```
+
 ## Machine-local configuration
 
 Machine-specific environment variables and credentials remain in

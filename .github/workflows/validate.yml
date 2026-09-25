@@ -17,7 +17,7 @@ jobs:
         run: brew bundle list --file=Brewfile >/dev/null
 
       - name: Install validation tools
-        run: brew install bat stow starship zoxide
+        run: brew install bat fzf stow starship tmux zoxide
 
       - name: Check Zsh syntax
         run: |
@@ -36,6 +36,9 @@ jobs:
 
       - name: Test the man-page pager
         run: zsh tests/manpager.zsh
+
+      - name: Test the command and topic help browsers
+        run: python3 tests/man-browser.py
 
       - name: Test the terminal viewer adapter
         run: zsh tests/terminal-viewer.zsh
