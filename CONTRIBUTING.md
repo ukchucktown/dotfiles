@@ -26,11 +26,14 @@ If a contribution adds a generated file or application directory, update both
 
 ## Validate a change
 
+The help browser tests require `fzf` and `tmux`.
+
 Run the checks that match the files you changed:
 
 ```sh
 zsh -n .zshenv .zshrc .config/zsh/*.zsh .config/zsh/.zshenv .config/zsh/.zshrc
 zsh tests/manpager.zsh
+python3 tests/man-browser.py
 zsh tests/terminal-viewer.zsh
 zsh tests/agent-instructions.zsh
 python3 tests/markdown-theme.py

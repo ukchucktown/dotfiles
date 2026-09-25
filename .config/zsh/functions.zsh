@@ -262,6 +262,28 @@ _man_help_subcommands() {
   '
 }
 
+# npm's short help drops all but the first line of each option description.
+# Keep short help for command discovery, but display the complete manual.
+_man_help_display() {
+  local manual_output
+  if [[ "${1:t}" == npm && $# -gt 1 ]]; then
+    manual_output=$(
+      PAGER=cat MANPAGER=cat MANWIDTH="${FZF_PREVIEW_COLUMNS:-80}" \
+        command "$1" help "$2" --viewer=man 2>/dev/null
+    )
+    if (( $? == 0 )) && [[ -n "$manual_output" ]]; then
+      if (( $+commands[col] )); then
+        print -r -- "$manual_output" | command col -bx
+      else
+        print -r -- "$manual_output"
+      fi
+      return
+    fi
+  fi
+
+  _man_help_capture "$@"
+}
+
 # Render the help page associated with an fzf browser row. The first argument
 # is ".", "..", or a child command; the remaining arguments are the current
 # command path.
@@ -276,7 +298,69 @@ _man_help_preview() {
     *) command_path+=("$action") ;;
   esac
 
-  _man_help_capture "$executable" "${command_path[@]}" | _man_help_colorize
+  _man_help_display "$executable" "${command_path[@]}" | _man_help_colorize
+}
+
+# Shared keyboard controls and focus labels for command and topic browsers.
+_man_browser_fzf() {
+  local label="$1"
+  shift
+  local zsh_command="${commands[zsh]:-zsh}" list_focus help_focus active_label
+
+  printf -v active_label ' \e[1;7m %s • ACTIVE \e[0m ' "$label"
+  printf -v list_focus 'change-prompt(%s > )+enable-search+change-list-label( \e[1;7m %s • ACTIVE \e[0m )+change-preview-label( Help )' "$label" "$label"
+  printf -v help_focus 'change-prompt(Help > )+disable-search+change-list-label( %s )+change-preview-label( \e[1;7m Help • ACTIVE \e[0m )' "$label"
+
+  fzf \
+    --ansi \
+    --with-shell="${(q)zsh_command} -fc" \
+    --no-multi \
+    --wrap=word \
+    --list-border=rounded \
+    --color=list-label:cyan,preview-label:cyan \
+    --list-label="$active_label" \
+    --prompt="$label > " \
+    --preview-window='right:50%:wrap-word:border-rounded' \
+    --preview-label=' Help ' \
+    --preview-wrap-sign='↳ ' \
+    --bind="tab,shift-tab:transform:if [[ \"\$FZF_PROMPT\" == \"Help > \" ]]; then printf %s ${(q)list_focus}; else printf %s ${(q)help_focus}; fi" \
+    --bind='ctrl-w:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf toggle-preview-wrap-word || printf toggle-wrap-word' \
+    --bind='up:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-up || printf up' \
+    --bind='down:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-down || printf down' \
+    --bind='pgup:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-page-up || printf page-up' \
+    --bind='pgdn:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-page-down || printf page-down' \
+    --bind='home:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-top || printf first' \
+    --bind='end:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-bottom || printf last' \
+    "$@"
+}
+
+# Keep the page and section separate from the displayed apropos description.
+# macOS uses name(section); man-db also uses name (section) and alias lists.
+_man_topic_candidates() {
+  LC_ALL=C awk '
+    match($0, /\([^()]+\)/) {
+      section = substr($0, RSTART + 1, RLENGTH - 2)
+      page = substr($0, 1, RSTART - 1)
+      sub(/,.*/, "", page)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", page)
+      if (page != "" && section ~ /^[[:alnum:]]+$/) {
+        printf "%s\t%s\t%s\n", page, section, $0
+      }
+    }
+  '
+}
+
+_man_topic_preview() {
+  local manual_output
+  manual_output=$(
+    PAGER=cat MANPAGER=cat MANWIDTH="${FZF_PREVIEW_COLUMNS:-80}" \
+      command man "$2" "$1" 2>&1
+  )
+  if (( $+commands[col] )); then
+    print -r -- "$manual_output" | command col -bx | _man_help_colorize
+  else
+    print -r -- "$manual_output" | _man_help_colorize
+  fi
 }
 
 # Browse a command's help tree without leaving the terminal. Each level shows
@@ -313,16 +397,7 @@ _man_help_browser() {
     invocation="${(j: :)${:-$executable $command_path}}"
 
     candidates=$'.\tOpen current help in pager'
-    browser_bindings=(
-      --bind='ctrl-w:toggle-wrap-word'
-      --bind='tab:transform:[[ "$FZF_PROMPT" == "Commands > " ]] && printf "change-prompt(Help > )+disable-search" || printf "change-prompt(Commands > )+enable-search"'
-      --bind='up:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-up || printf up'
-      --bind='down:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-down || printf down'
-      --bind='pgup:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-page-up || printf page-up'
-      --bind='pgdn:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-page-down || printf page-down'
-      --bind='home:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-top || printf first'
-      --bind='end:transform:[[ "$FZF_PROMPT" == "Help > " ]] && printf preview-bottom || printf last'
-    )
+    browser_bindings=()
     if (( ${#command_path} )); then
       candidates+=$'\n..\tGo to parent command'
       browser_bindings+=(--bind='left:clear-query+pos(2)+accept')
@@ -359,25 +434,19 @@ _man_help_browser() {
 
     selected=$(
       print -r -- "$formatted_candidates" |
-        fzf \
-          --ansi \
-          --no-multi \
+        _man_browser_fzf Commands \
           --delimiter=$'\t' \
           --with-nth=2 \
-          --wrap=word \
           --wrap-sign="$wrap_sign" \
-          --prompt='Commands > ' \
           --header="$invocation  •  Tab: switch pane  •  Enter: descend/open  •  Left/..: parent  •  Ctrl-W: wrap  •  Esc: quit" \
           --preview="$preview_command" \
-          --preview-window='right:50%:wrap:border-left' \
-          --preview-wrap-sign='↳ ' \
           "${browser_bindings[@]}"
     ) || return
 
     action=${selected%%$'\t'*}
     case "$action" in
       .)
-        print -r -- "$help_output" | _man_help_colorize | less -R
+        _man_help_display "$executable" "${command_path[@]}" | _man_help_colorize | less -R
         ;;
       ..)
         (( ${#command_path} )) && command_path[-1]=()
@@ -398,6 +467,7 @@ _man_search() {
   shift
 
   local selected reference page section help_output help_status invocation subcommands
+  local functions_file preview_script preview_command zsh_command
   local -a command_args
 
   case "$mode" in
@@ -452,19 +522,22 @@ _man_search() {
         return 127
       }
 
+      functions_file="${ZDOTDIR:-$HOME/.config/zsh}/functions.zsh"
+      preview_script='source "$1"; shift; _man_topic_preview "$@"'
+      zsh_command="${commands[zsh]:-zsh}"
+      preview_command="${(q)zsh_command} -fc ${(q)preview_script} tman-preview ${(q)functions_file} {1} {2}"
+
       selected=$(
-        man -k . 2>/dev/null |
-          fzf --prompt='man topic> '
+        man -k . 2>/dev/null | _man_topic_candidates |
+          _man_browser_fzf Topics \
+            --delimiter=$'\t' \
+            --with-nth=3.. \
+            --header='Tab: switch pane  •  Enter: open manual  •  Ctrl-W: wrap  •  Esc: quit' \
+            --preview="$preview_command"
       ) || return
 
       [[ -n "$selected" ]] || return
-
-      reference=${selected%%[[:space:]]*}
-      reference=${reference%,}
-      page=${reference%%\(*}
-      section=${reference#*\(}
-      section=${section%\)}
-
+      IFS=$'\t' read -r page section reference <<< "$selected"
       man "$section" "$page"
       ;;
 
