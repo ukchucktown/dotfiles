@@ -59,6 +59,8 @@ Concision means cutting redundancy, never cutting meaning. Specifically:
 - **[both] Define labels you invent, where you introduce them.** Any term that came from you rather than from the codebase or the field needs a one-line definition on first use — including in a heading. If I'd have to read your whole answer to work out what a label means, it isn't a label yet.
 - **[both] State the axis of any ranking, grouping, or numbered taxonomy.** "Tier 1 / Tier 2", "high / low priority", "Group A / B" all imply an ordering I can't verify without knowing what's being ordered — severity? detection? effort? Name it, and say so explicitly when it *isn't* severity, since that's what I'll assume. Prefer a descriptive name over a number when one exists.
 
+**End of a turn.** After you edit files, say in a few lines what changed and how you verified it. Don't list every edited file or replay the diff — the harness shows it to me. Don't close with a menu of follow-up options unless a decision is genuinely mine to make.
+
 When the material is dense and you're unsure, add the clause. I'd rather read one extra sentence than re-read a table three times. If a full explanation would genuinely run long, give me the short version plus an offer to expand — don't silently compress it into something I have to decode.
 
 ## Artifacts and deliverables

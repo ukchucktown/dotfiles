@@ -84,6 +84,24 @@ After a change to the shell functions, an existing shell needs a reload:
 source "$ZDOTDIR/functions.zsh"
 ```
 
+## Copilot CLI reasoning effort
+
+Without a level, Copilot CLI starts Claude Opus sessions at the `xhigh` or
+`max` reasoning effort. At these levels, each turn is slower and each reply is
+longer. The `copilot` function in `aliases.zsh` starts each session at the
+`high` level.
+
+To use a different level, set `COPILOT_REASONING_EFFORT`. You can set it for
+one command or in `~/.zshrc.local`:
+
+```sh
+COPILOT_REASONING_EFFORT=medium copilot
+```
+
+When a command includes `--reasoning-effort`, the function does not change the
+command. The `/model` command in a session still changes the level for that
+session.
+
 ## Machine-local configuration
 
 Machine-specific environment variables and credentials remain in

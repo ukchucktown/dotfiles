@@ -41,6 +41,19 @@ alias k='kubectl'
 alias gemini='NODE_OPTIONS="--no-deprecation" gemini'
 alias lw='npx lampwright'
 
+# Copilot CLI otherwise starts Claude Opus sessions at xhigh or max reasoning
+# effort, which makes each turn slower and wordier. COPILOT_REASONING_EFFORT
+# selects another level, and an explicit --reasoning-effort always wins.
+if command -v copilot >/dev/null 2>&1; then
+  copilot() {
+    if (( ${argv[(I)--reasoning-effort*]} )); then
+      command copilot "$@"
+    else
+      command copilot --reasoning-effort "${COPILOT_REASONING_EFFORT:-high}" "$@"
+    fi
+  }
+fi
+
 # Render Markdown through the GitHub-style preview inside Ghostty. Zsh suffix
 # aliases make a Markdown filename usable directly as a command.
 if command -v md >/dev/null 2>&1; then

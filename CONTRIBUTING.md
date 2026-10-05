@@ -36,6 +36,7 @@ zsh tests/manpager.zsh
 python3 tests/man-browser.py
 zsh tests/terminal-viewer.zsh
 zsh tests/agent-instructions.zsh
+zsh tests/copilot-effort.zsh
 python3 tests/markdown-theme.py
 
 target="$(mktemp -d)"
