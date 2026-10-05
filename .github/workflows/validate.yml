@@ -52,6 +52,9 @@ jobs:
       - name: Test Markdown theme selection
         run: python3 tests/markdown-theme.py
 
+      - name: Test the folded ~/.config migration
+        run: python3 tests/unfold-config.py
+
       - name: Validate Starship configuration
         env:
           STARSHIP_CONFIG: .config/starship.toml

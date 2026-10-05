@@ -17,6 +17,7 @@ _darcs
 ^/COPYING
 ^/Brewfile$
 ^/CONTRIBUTING.*
+^/KEYBINDINGS.*
 ^/THIRD_PARTY_NOTICES.*
 ^/\.github(/.*)?$
 
@@ -32,4 +33,5 @@ _darcs
 ^/\.config/zed/prompts(/.*)?$
 ^/\.ideavimrc$
 ^/agent-shell(/.*)?$
+^/scripts(/.*)?$
 ^/tests(/.*)?$
