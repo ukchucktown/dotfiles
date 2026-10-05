@@ -38,6 +38,7 @@ zsh tests/terminal-viewer.zsh
 zsh tests/agent-instructions.zsh
 zsh tests/copilot-effort.zsh
 python3 tests/markdown-theme.py
+python3 tests/unfold-config.py
 
 target="$(mktemp -d)"
 mkdir -p "$target/.config"

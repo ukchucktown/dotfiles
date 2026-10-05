@@ -287,12 +287,33 @@ stow --simulate --verbose --target="$HOME" --no-folding --restow .
 stow --target="$HOME" --no-folding --restow .
 ```
 
-Older installations may have a folded `~/.config -> ~/dotfiles/.config`
-link. That link continues to resolve the configuration, but it also causes
-untracked application state to accumulate inside the checkout. Move that
-local-only state into a real `~/.config` directory before switching the
-installation to `--no-folding`; do not blindly run `--restow` over a folded
-installation.
+Older installations can have a folded `~/.config -> ~/dotfiles/.config`
+link. The configuration works through that link, but each application then
+writes its state into the checkout. Do not run `--restow` over a folded
+installation. Stow links only the tracked files, so the applications lose
+access to their state.
+
+To convert a folded installation, use the migration script. Without
+`--apply`, the script shows the plan and changes nothing:
+
+```sh
+~/dotfiles/scripts/unfold-config
+~/dotfiles/scripts/unfold-config --apply
+```
+
+The script does these steps:
+
+1. Stop when Stow reports a conflict that the script cannot resolve.
+2. Write a backup to `~/.local/state/dotfiles`.
+3. Move each untracked and ignored entry into a real `~/.config` directory.
+4. Correct each relative link that points outside the checkout.
+5. Copy the tracked files that Stow does not link, such as `gh/config.yml`.
+6. Replace each home file that has the same content as its tracked file with
+   a link.
+7. Run Stow with `--no-folding`.
+
+The backup contains credentials, such as the GitHub CLI login. Delete the
+backup after you examine the result.
 
 ### Manual links
 

@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+"""Replace a folded ~/.config link with a real directory of per-file links.
+
+Older installations link the whole ~/.config directory into this checkout, so
+applications write their state into the checkout. This script moves that state
+into a real ~/.config directory and then runs Stow with --no-folding.
+
+Without --apply, the script prints the plan and changes nothing.
+"""
+
+import argparse
+import filecmp
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+from pathlib import Path
+
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+CONFLICT_PATTERN = re.compile(r"over existing target (.+?) since neither a link nor a directory")
+
+
+def run(command):
+    return subprocess.run(command, check=True, text=True, capture_output=True)
+
+
+def stow(repo, target, *extra):
+    command = ["stow", f"--dir={repo}", f"--target={target}", "--no-folding", *extra, "."]
+    return subprocess.run(command, text=True, capture_output=True)
+
+
+def git_paths(repo, *args):
+    output = run(["git", "-C", str(repo), "ls-files", "-z", *args, "--", ".config"]).stdout
+    return [path.rstrip("/") for path in output.split("\0") if path]
+
+
+def linked_paths(repo):
+    """Return the paths that Stow links into an empty home directory."""
+    with tempfile.TemporaryDirectory() as target:
+        result = stow(repo, target, "--simulate", "--verbose=1")
+        return {match.group(1) for match in re.finditer(r"^LINK: (.+?) => ", result.stderr, re.M)}
+
+
+def home_conflicts(repo, home):
+    """Split Stow conflicts into identical copies and conflicts that block the run."""
+    result = stow(repo, home, "--simulate")
+    identical, blocking = [], []
+    for line in result.stderr.splitlines():
+        if not line.strip().startswith("*"):
+            continue
+        match = CONFLICT_PATTERN.search(line)
+        if match:
+            name = match.group(1)
+            copy, source = home / name, repo / name
+            if copy.is_file() and source.is_file() and filecmp.cmp(copy, source, shallow=False):
+                identical.append(name)
+                continue
+        blocking.append(line.strip().lstrip("* "))
+    if result.returncode != 0 and not identical and not blocking:
+        blocking.append(result.stderr.strip())
+    return identical, blocking
+
+
+def symlinks_under(path):
+    if path.is_symlink():
+        return [path]
+    links = []
+    for directory, subdirectories, files in os.walk(path):
+        for name in subdirectories + files:
+            candidate = Path(directory, name)
+            if candidate.is_symlink():
+                links.append(candidate)
+    return links
+
+
+def resolve_link(link):
+    """Return the absolute target of a link without following further links."""
+    return Path(os.path.normpath(os.path.join(link.parent, os.readlink(link))))
+
+
+def plan_link_repairs(repo_config, entries):
+    """Find relative links whose target lies outside the moved directory tree."""
+    repairs = []
+    for entry in entries:
+        for link in symlinks_under(repo_config.parent / entry):
+            target = os.readlink(link)
+            if os.path.isabs(target):
+                continue
+            resolved = resolve_link(link)
+            if resolved == repo_config or repo_config in resolved.parents:
+                continue
+            repairs.append((link.relative_to(repo_config), resolved, link.exists()))
+    return repairs
+
+
+def write_backup(home, repo, entries, copies, identical):
+    backup_dir = home / ".local/state/dotfiles"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup = backup_dir / f"unfold-config-{time.strftime('%Y%m%d-%H%M%S')}.tar.gz"
+    with tarfile.open(backup, "w:gz") as archive:
+        for path in entries + copies:
+            archive.add(repo / path, arcname=f"dotfiles/{path}")
+        for name in identical:
+            archive.add(home / name, arcname=f"home/{name}")
+    backup.chmod(0o600)
+    return backup
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--apply", action="store_true", help="make the changes")
+    parser.add_argument("--home", type=Path, default=Path.home())
+    parser.add_argument("--repo", type=Path, default=REPOSITORY_ROOT)
+    args = parser.parse_args()
+
+    home, repo = args.home.resolve(), args.repo.resolve()
+    home_config, repo_config = home / ".config", repo / ".config"
+
+    if not home_config.is_symlink():
+        print(f"{home_config} is not a link. Nothing to do.")
+        return 0
+    if home_config.resolve() != repo_config:
+        print(f"{home_config} points to {home_config.resolve()}, not to {repo_config}.", file=sys.stderr)
+        return 1
+
+    entries = git_paths(repo, "--others", "--directory")
+    linked = linked_paths(repo)
+    copies = [path for path in git_paths(repo) if path not in linked and Path(path).name != ".gitignore"]
+    repairs = plan_link_repairs(repo_config, entries)
+    links = {
+        link.relative_to(repo_config): link.exists()
+        for entry in entries
+        for link in symlinks_under(repo / entry)
+    }
+    identical, blocking = home_conflicts(repo, home)
+
+    print(f"Move {len(entries)} untracked or ignored entries into a real {home_config}:")
+    for entry in entries:
+        print(f"  {entry}")
+    print(f"Copy {len(copies)} tracked files that Stow does not link:")
+    for path in copies:
+        print(f"  {path}")
+    print(f"Correct {len(repairs)} relative links that point outside the checkout:")
+    for link, resolved, exists in repairs:
+        print(f"  .config/{link} -> {resolved}{'' if exists else ' (already broken)'}")
+    print(f"Replace {len(identical)} identical home copies with links:")
+    for name in identical:
+        print(f"  ~/{name}")
+
+    if blocking:
+        print("Stow reports conflicts that this script does not resolve:", file=sys.stderr)
+        for line in blocking:
+            print(f"  {line}", file=sys.stderr)
+        return 1
+    if not args.apply:
+        print("Dry run. Run again with --apply to make the changes.")
+        return 0
+
+    backup = write_backup(home, repo, entries, copies, identical)
+    print(f"Backup: {backup}")
+
+    staging = home / f".config.unfold-{os.getpid()}"
+    staging.mkdir()
+    moved = []
+    try:
+        for entry in entries:
+            destination = staging / Path(entry).relative_to(".config")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            os.rename(repo / entry, destination)
+            moved.append((repo / entry, destination))
+        for link, resolved, _ in repairs:
+            new_link = staging / link
+            new_link.unlink()
+            new_link.symlink_to(os.path.relpath(resolved, new_link.parent))
+        for path in copies:
+            destination = staging / Path(path).relative_to(".config")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(repo / path, destination)
+    except Exception:
+        for source, destination in reversed(moved):
+            os.rename(destination, source)
+        print(f"The move failed. The script restored the checkout. Remove {staging} after a check.", file=sys.stderr)
+        raise
+
+    home_config.unlink()
+    os.rename(staging, home_config)
+    for name in identical:
+        (home / name).unlink()
+
+    result = stow(repo, home)
+    if result.returncode != 0:
+        print(result.stderr, file=sys.stderr)
+        print(f"Stow failed. The local state is in {home_config}. Correct the conflict, then run:", file=sys.stderr)
+        print(f"  stow --dir={repo} --target={home} --no-folding .", file=sys.stderr)
+        return 1
+
+    problems = []
+    for link, exists in links.items():
+        if (home_config / link).exists() != exists:
+            problems.append(f"~/.config/{link} {'no longer resolves' if exists else 'changed'}")
+    leftovers = git_paths(repo, "--others", "--directory")
+    if leftovers:
+        problems.append(f"the checkout still has untracked entries: {', '.join(leftovers)}")
+    for line in problems:
+        print(f"Check failed: {line}", file=sys.stderr)
+    if problems:
+        return 1
+
+    print(f"Done. {home_config} is a directory, and Stow linked each tracked file.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
