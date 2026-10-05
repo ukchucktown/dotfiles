@@ -1,5 +1,6 @@
 theme="subliminal-nightfall-fuzzy.conf"
 background-opacity=0.90
+background-opacity-cells=true
 background-blur=true
 unfocused-split-opacity=0.84
 unfocused-split-fill=#03021a
