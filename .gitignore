@@ -19,3 +19,6 @@
 .config/herdr/session.json
 .config/zed/settings*.json
 .config/zed/prompts/
+
+# Shared Pi deployment metadata is machine-local.
+.config/pi/deployment.json
