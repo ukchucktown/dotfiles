@@ -282,7 +282,7 @@ export function installCompatibility(state: any): () => void {
           const menu = this.autocompleteList
             .render(contentWidth)
             .map((line: string) =>
-              /^\s*→ /.test(line.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, ""))
+              /^\s*[→›❯] /.test(line.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, ""))
                 ? selectedRow(" ".repeat(padding) + line, width, activeTheme)
                 : truncateToWidth(" ".repeat(padding) + line, width),
             );

@@ -497,7 +497,7 @@ try {
   assert.equal(commandsPlain[0], "", "Menu has a blank row above it");
   assert.match(
     commandsPlain[1],
-    /^  → \/settings/,
+    /^  › \/settings/,
     "Menu retains native selection and side padding",
   );
   assert.ok(
@@ -520,7 +520,7 @@ try {
     "Blank padding is not a command hit",
   );
   commandEditor.handleInput("\x1b[B");
-  assert.match(plain(commandEditor.render(100)), /→ \/model/);
+  assert.match(plain(commandEditor.render(100)), /› \/model/);
   commandEditor.handleInput("\t");
   assert.equal(commandEditor.getText(), "/model ");
   assert.equal(commandEditor.isShowingAutocomplete(), false);
@@ -581,10 +581,10 @@ try {
     menuTui.renderNow();
     const screen = menuTui.getScreenLines().map((line) => plain([line]));
     const selectedRow = screen.findIndex((line) =>
-      line.includes("→ /settings"),
+      line.includes("› /settings"),
     );
     const modelRow = screen.findIndex((line) => line.includes("Select model"));
-    const promptRow = screen.findIndex((line) => line.includes("› /"));
+    const promptRow = screen.findIndex((line) => line.trim() === "› /");
     assert.ok(
       selectedRow >= 0 && modelRow > selectedRow && modelRow < promptRow,
     );
@@ -618,7 +618,10 @@ try {
   assert.equal(
     commandEditor
       .render(100)
-      .filter((line) => /^\s*[→ ] \//.test(plain([line]))).length,
+      .filter(
+        (line) =>
+          !line.includes(CURSOR_MARKER) && /^\s*[› ] \//.test(plain([line])),
+      ).length,
     3,
     "Menu respects Pi's configured visible-item limit",
   );
@@ -688,6 +691,16 @@ try {
     assert.ok(
       rows[input].startsWith(sharedTheme.getBgAnsi("userMessageBg")),
       "Search uses shared theme prompt surface",
+    );
+    assert.doesNotMatch(
+      plain(rows),
+      /^\s*→ /m,
+      "Menu selections use the shared chevron",
+    );
+    assert.match(
+      plain([rows[input]]),
+      /^\s*› /,
+      "Search prompt uses the same chevron",
     );
     return rows;
   };
@@ -866,7 +879,7 @@ try {
   const themePicker = showPicker(
     (done) => new ThemeSelectorComponent("dark", done, done, () => {}),
   );
-  assert.match(plain(themePicker.layout.render(100)), /→ dark/);
+  assert.match(plain(themePicker.layout.render(100)), /› dark/);
   themePicker.native.getSelectList().handleInput("\x1b");
   const extensionPicker = new ExtensionSelectorComponent(
     "Choose",
@@ -877,7 +890,7 @@ try {
   assert.ok(
     extensionPicker
       .render(100)
-      .find((line) => plain([line]).includes("→ First"))
+      .find((line) => plain([line]).includes("› First"))
       .startsWith(sharedTheme.getBgAnsi("selectedBg")),
   );
 

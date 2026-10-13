@@ -21,11 +21,22 @@ export function fillRow(line: string, width: number): string {
 export function selectedRow(line: string, width: number, theme: any): string {
   return theme.bg(
     "selectedBg",
-    theme.bold(theme.fg("text", fillRow(stripTerminalSequences(line), width))),
+    theme.bold(
+      theme.fg(
+        "text",
+        fillRow(
+          stripTerminalSequences(line).replace(/^(\s*)[→›❯](?=\s)/, "$1›"),
+          width,
+        ),
+      ),
+    ),
   );
 }
 export function promptRow(line: string, width: number, theme: any): string {
-  return theme.bg("userMessageBg", fillRow(line, width));
+  return theme.bg(
+    "userMessageBg",
+    fillRow(line.replace(/^(\s*)>(?=\s)/, "$1›"), width),
+  );
 }
 
 // Transform only presentation. Each output row maps back to the native row so
