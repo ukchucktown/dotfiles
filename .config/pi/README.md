@@ -43,6 +43,8 @@ Direct npm updates and Pi's own updater bypass this command. The manager current
 
 Tool presentation uses Pi's public `registerToolRenderer()` API. The renderer does not replace tools or alter tool results and stored messages. The footer and working indicator use public UI methods.
 
-The compatibility module preserves features that Pi does not expose through public APIs: measured thought headings, command-menu placement, anchored expansion, the hidden scroll popup, and the working indicator's placement in the footer. The module contains all internal-method patches and restores them during reload and shutdown.
+The menus use the shared theme's teal selection background and dark prompt surface. Slash suggestions show command names beside their descriptions. Native command pickers place their search field below the choices. The renderer retains Pi's original filters, callbacks, shortcuts, and cancellation behavior.
+
+The compatibility module preserves features that Pi does not expose through public APIs: measured thought headings, command-menu placement, native picker layout, prompt appearance, anchored expansion, the hidden scroll popup, and the working indicator's placement in the footer. The module contains all internal-method patches and restores them during reload and shutdown.
 
 The compatibility tests exercise these behaviors against each candidate. Pi changes can still require an update to the compatibility module or its tests. A failed check blocks deployment instead of silently removing a feature.

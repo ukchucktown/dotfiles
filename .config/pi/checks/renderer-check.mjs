@@ -15,6 +15,13 @@ const {
   ToolExecutionComponent,
   AssistantMessageComponent,
   CustomEditor,
+  InteractiveMode,
+  OAuthSelectorComponent,
+  ModelSelectorComponent,
+  ThinkingSelectorComponent,
+  ThemeSelectorComponent,
+  ExtensionSelectorComponent,
+  getSettingsListTheme,
 } = await load("dist/index.js");
 const require = createRequire(path.join(packageRoot, "package.json"));
 const {
@@ -25,14 +32,24 @@ const {
   setKeybindings,
   CombinedAutocompleteProvider,
   CURSOR_MARKER,
+  SettingsList,
+  SelectList,
 } = await import(require.resolve("@earendil-works/pi-tui"));
 const { KeybindingsManager } = await load("dist/core/keybindings.js");
 const keybindings = new KeybindingsManager();
 setKeybindings(keybindings);
-const { getEditorTheme } = await load("dist/modes/interactive/theme/theme.js");
+const { getEditorTheme, loadThemeFromPath, setThemeInstance } = await load(
+  "dist/modes/interactive/theme/theme.js",
+);
 const { WorkingStatusIndicator } = await load(
   "dist/modes/interactive/components/status-indicator.js",
 );
+const originalShowSelector = InteractiveMode.prototype.showSelector;
+const originalSelectItem = SelectList.prototype.renderItem;
+const originalSettingsRender = SettingsList.prototype.render;
+const originalSettingsMouse = SettingsList.prototype.handleMouse;
+const originalExtensionRender = ExtensionSelectorComponent.prototype.render;
+const originalExtensionMouse = ExtensionSelectorComponent.prototype.handleMouse;
 const originalEditorStatus = CustomEditor.prototype.setWorkingStatusIndicator;
 let footerFactory;
 let workingIndicatorOptions;
@@ -50,6 +67,11 @@ const source =
   process.env.PI_RENDERER_SOURCE ??
   path.resolve(import.meta.dirname, "../extensions/renderer.ts");
 initTheme("dark", false);
+const sharedTheme = loadThemeFromPath(
+  path.resolve(path.dirname(source), "../themes/agent-sandbox.json"),
+  "truecolor",
+);
+setThemeInstance(sharedTheme);
 const originalAssistant = AssistantMessageComponent.prototype.updateContent;
 const originalShell = ToolExecutionComponent.prototype.getRenderShell;
 const agentDir = mkdtempSync("/tmp/pi-renderer-check-");
@@ -115,8 +137,58 @@ try {
     originalShell,
     "Tool shell selection is not patched",
   );
+  // Pi measures its editor and can open a startup picker before session_start.
+  const startupEditor = new CustomEditor(
+    { requestRender() {}, terminal: { rows: 30 } },
+    getEditorTheme(),
+    keybindings,
+  );
+  startupEditor.focused = true;
+  startupEditor.setText("startup");
+  assert.match(
+    plain(startupEditor.render(100)),
+    /startup/,
+    "Initial render works before the extension UI is bound",
+  );
+  const startupMode = Object.create(InteractiveMode.prototype);
+  startupMode.editorContainer = new Container();
+  startupMode.editor = startupEditor;
+  startupMode.ui = {
+    requestRender() {},
+    setFocus(component) {
+      component.focused = true;
+    },
+  };
+  let startupPicker;
+  startupMode.showSelector((done) => {
+    startupPicker = new OAuthSelectorComponent(
+      "login",
+      [{ id: "github-copilot", name: "GitHub Copilot", authType: "oauth" }],
+      done,
+      done,
+    );
+    return { component: startupPicker, focus: startupPicker };
+  });
+  assert.match(
+    plain(startupMode.editorContainer.render(100)),
+    /GitHub Copilot/,
+    "Startup picker works before the extension UI is bound",
+  );
+  startupPicker.handleInput("\x1b");
+  assert.match(
+    plain(
+      new ExtensionSelectorComponent(
+        "Startup",
+        ["Ready"],
+        () => {},
+        () => {},
+      ).render(100),
+    ),
+    /Ready/,
+  );
   const ui = {
     ...session.extensionRunner.createContext().ui,
+    theme: sharedTheme,
     setFooter: (factory) => {
       footerFactory = factory;
     },
@@ -389,7 +461,14 @@ try {
     new CombinedAutocompleteProvider(
       [
         { name: "settings", description: "Open settings menu" },
-        { name: "model", description: "Select model" },
+        {
+          name: "model",
+          description: "Select model",
+          getArgumentCompletions: () => [
+            { value: "alpha", label: "alpha", description: "Alpha model" },
+            { value: "beta", label: "beta", description: "Beta model" },
+          ],
+        },
         { name: "tree", description: "Navigate session tree" },
         { name: "thinking", description: "Set thinking level" },
         { name: "scoped-models", description: "Choose models" },
@@ -410,14 +489,15 @@ try {
   await openCommands();
   let commands = commandEditor.render(100);
   let commandsPlain = commands.map((line) => plain([line]));
-  const promptBorder = commandsPlain.findIndex((line) => line.includes("─"));
+  const promptBorder =
+    commands.findIndex((line) => line.includes(CURSOR_MARKER)) - 1;
   assert.ok(
     promptBorder > commandsPlain.findIndex((line) => line.includes("settings")),
   );
   assert.equal(commandsPlain[0], "", "Menu has a blank row above it");
   assert.match(
     commandsPlain[1],
-    /^ → settings/,
+    /^  → \/settings/,
     "Menu retains native selection and side padding",
   );
   assert.ok(
@@ -440,11 +520,11 @@ try {
     "Blank padding is not a command hit",
   );
   commandEditor.handleInput("\x1b[B");
-  assert.match(plain(commandEditor.render(100)), /→ model/);
+  assert.match(plain(commandEditor.render(100)), /→ \/model/);
   commandEditor.handleInput("\t");
   assert.equal(commandEditor.getText(), "/model ");
   assert.equal(commandEditor.isShowingAutocomplete(), false);
-  assert.match(plain([commandEditor.render(100)[0]]), /^─/);
+  assert.equal(plain([commandEditor.render(100)[0]]).trim(), "");
   await openCommands();
   commandEditor.render(100);
   assert.equal(
@@ -500,9 +580,11 @@ try {
   try {
     menuTui.renderNow();
     const screen = menuTui.getScreenLines().map((line) => plain([line]));
-    const selectedRow = screen.findIndex((line) => line.includes("→ settings"));
+    const selectedRow = screen.findIndex((line) =>
+      line.includes("→ /settings"),
+    );
     const modelRow = screen.findIndex((line) => line.includes("Select model"));
-    const promptRow = screen.findIndex((line) => line.includes("─"));
+    const promptRow = screen.findIndex((line) => line.includes("› /"));
     assert.ok(
       selectedRow >= 0 && modelRow > selectedRow && modelRow < promptRow,
     );
@@ -520,21 +602,285 @@ try {
   }
   for (const width of [1, 2, 12, 40, 100]) {
     await openCommands();
-    const native = originalEditorRender
-      .call(commandEditor, width)
-      .slice(0, commandEditor.renderedVisibleLineCount + 2);
     const moved = commandEditor.render(width);
-    const menuRows = moved.length - native.length;
     assert.ok(
-      moved.slice(0, menuRows).every((line) => visibleWidth(line) <= width),
+      moved.every((line) => visibleWidth(line) <= width),
       `Command menu width ${width}`,
     );
-    assert.deepEqual(
-      moved.slice(menuRows),
-      native,
-      "Prompt and cursor retain native rendering at each width",
+    assert.equal(
+      moved.filter((line) => line.includes(CURSOR_MARKER)).length,
+      1,
+      "Narrow prompt retains hardware cursor",
     );
   }
+  commandEditor.autocompleteMaxVisible = 3;
+  await openCommands();
+  assert.equal(
+    commandEditor
+      .render(100)
+      .filter((line) => /^\s*[→ ] \//.test(plain([line]))).length,
+    3,
+    "Menu respects Pi's configured visible-item limit",
+  );
+  commandEditor.autocompleteMaxVisible = 5;
+  await openCommands("/model a");
+  const argumentsRows = commandEditor.render(100);
+  const argumentItem = argumentsRows.findIndex((line) =>
+    plain([line]).includes("Alpha model"),
+  );
+  const argumentPrompt = argumentsRows.findIndex((line) =>
+    line.includes(CURSOR_MARKER),
+  );
+  assert.ok(
+    argumentItem >= 0 && argumentItem < argumentPrompt,
+    "Slash-command argument suggestions also appear above the prompt",
+  );
+  assert.doesNotMatch(
+    plain(argumentsRows.slice(0, argumentPrompt)),
+    /\/alpha/,
+    "Argument labels do not gain a command slash",
+  );
+  commandEditor.handleInput("\t");
+  assert.equal(
+    commandEditor.getText(),
+    "/model alpha",
+    "Native argument completion remains intact",
+  );
+  // Built-in dialogs use the same list-first layout without replacing handlers.
+  const mode = Object.create(InteractiveMode.prototype);
+  mode.editorContainer = new Container();
+  mode.editor = commandEditor;
+  mode.ui = {
+    requestRender() {},
+    setFocus(component) {
+      if (component) component.focused = true;
+    },
+  };
+  const showPicker = (create) => {
+    let native;
+    mode.showSelector((done) => {
+      native = create(done);
+      return {
+        component: native,
+        focus: native,
+        dispose: () => native.dispose?.(),
+      };
+    });
+    return { native, layout: mode.editorContainer.children[0] };
+  };
+  const assertPicker = (layout, label, width = 100) => {
+    const rows = layout.render(width);
+    const input = rows.findIndex((line) => line.includes(CURSOR_MARKER));
+    const item = rows.findIndex((line) => plain([line]).includes(label));
+    assert.ok(
+      item >= 0 && input > item,
+      "Picker options appear above search input",
+    );
+    assert.ok(
+      rows.every((line) => visibleWidth(line) <= width),
+      "Picker rows stay within terminal width",
+    );
+    assert.equal(rows.filter((line) => line.includes(CURSOR_MARKER)).length, 1);
+    assert.ok(
+      rows[item].startsWith(sharedTheme.getBgAnsi("selectedBg")),
+      "Selected row uses shared theme selection background",
+    );
+    assert.ok(
+      rows[input].startsWith(sharedTheme.getBgAnsi("userMessageBg")),
+      "Search uses shared theme prompt surface",
+    );
+    return rows;
+  };
+  let pickedProvider;
+  const auth = showPicker(
+    (done) =>
+      new OAuthSelectorComponent(
+        "login",
+        [
+          { id: "github-copilot", name: "GitHub Copilot", authType: "oauth" },
+          { id: "anthropic", name: "Anthropic", authType: "api_key" },
+        ],
+        (provider) => {
+          pickedProvider = provider;
+          done();
+        },
+        done,
+      ),
+  );
+  assertPicker(auth.layout, "GitHub Copilot");
+  auth.native.handleInput("anth");
+  assertPicker(auth.layout, "Anthropic");
+  auth.native.handleInput("\r");
+  assert.equal(pickedProvider, "anthropic");
+  assert.equal(
+    mode.editorContainer.children[0],
+    commandEditor,
+    "Selection restores the editor",
+  );
+  const cancelAuth = showPicker(
+    (done) =>
+      new OAuthSelectorComponent(
+        "login",
+        [{ id: "github-copilot", name: "GitHub Copilot", authType: "oauth" }],
+        done,
+        done,
+      ),
+  );
+  const authRows = assertPicker(cancelAuth.layout, "GitHub Copilot");
+  const authInput = authRows.findIndex((line) => line.includes(CURSOR_MARKER));
+  assert.equal(
+    cancelAuth.layout.handleMouse({
+      ...mouse(authInput),
+      type: "press",
+      height: authRows.length,
+    })?.handled,
+    true,
+    "Moved picker input remains clickable",
+  );
+  cancelAuth.native.handleInput("\x1b");
+  assert.equal(
+    mode.editorContainer.children[0],
+    commandEditor,
+    "Escape restores the editor",
+  );
+  let pickedModel;
+  const fixtureModels = [
+    { ...session.model, id: "alpha", name: "Alpha model" },
+    { ...session.model, id: "beta", name: "Beta model" },
+  ];
+  const modelRuntime = {
+    getAvailableSnapshot: () => fixtureModels,
+    getModel: (provider, id) => fixtureModels.find((model) => model.id === id),
+    getError: () => undefined,
+    refresh: async () => ({ errors: new Map(), aborted: false }),
+  };
+  const models = showPicker(
+    (done) =>
+      new ModelSelectorComponent(
+        mode.ui,
+        fixtureModels[0],
+        modelRuntime,
+        [],
+        (model) => {
+          pickedModel = model;
+          done();
+        },
+        done,
+      ),
+  );
+  assertPicker(models.layout, "alpha");
+  models.native.handleInput("beta");
+  assertPicker(models.layout, "beta");
+  models.native.handleInput("\r");
+  assert.equal(pickedModel.id, "beta");
+  let level;
+  const thinking = showPicker(
+    (done) =>
+      new ThinkingSelectorComponent(
+        "low",
+        ["off", "low", "high"],
+        (value) => {
+          level = value;
+          done();
+        },
+        done,
+      ),
+  );
+  assertPicker(thinking.layout, "low");
+  thinking.native.handleInput("\x1b[B");
+  assertPicker(thinking.layout, "high");
+  thinking.native.handleInput("\r");
+  assert.equal(level, "high");
+  let setting;
+  const settings = new SettingsList(
+    [
+      {
+        id: "theme",
+        label: "Theme",
+        currentValue: "dark",
+        values: ["dark", "light"],
+      },
+      {
+        id: "images",
+        label: "Images",
+        currentValue: "yes",
+        values: ["yes", "no"],
+      },
+    ],
+    5,
+    getSettingsListTheme(),
+    (id, value) => {
+      setting = { id, value };
+    },
+    () => {},
+    { enableSearch: true },
+  );
+  settings.searchInput.focused = true;
+  let settingsRows = settings.render(100);
+  assertPicker(settings, "Theme");
+  const imageRow = settingsRows.findIndex((line) =>
+    plain([line]).includes("Images"),
+  );
+  settings.handleMouse({
+    ...mouse(imageRow),
+    type: "press",
+    height: settingsRows.length,
+  });
+  settings.handleMouse({ ...mouse(imageRow), height: settingsRows.length });
+  assert.deepEqual(
+    setting,
+    { id: "images", value: "no" },
+    "Moved settings rows keep native click activation",
+  );
+  const settingsInputRow = settings
+    .render(100)
+    .findIndex((line) => line.includes(CURSOR_MARKER));
+  assert.equal(
+    settings.handleMouse({
+      ...mouse(settingsInputRow),
+      type: "press",
+      height: settings.render(100).length,
+    })?.handled,
+    true,
+  );
+  for (const width of [1, 2, 12, 40, 100]) {
+    const narrow = showPicker(
+      (done) =>
+        new OAuthSelectorComponent(
+          "login",
+          [{ id: "github-copilot", name: "GitHub Copilot", authType: "oauth" }],
+          done,
+          done,
+        ),
+    );
+    assert.ok(
+      narrow.layout.render(width).every((line) => visibleWidth(line) <= width),
+    );
+    assert.equal(
+      narrow.layout.render(width).filter((line) => line.includes(CURSOR_MARKER))
+        .length,
+      1,
+    );
+    narrow.native.handleInput("\x1b");
+  }
+  const themePicker = showPicker(
+    (done) => new ThemeSelectorComponent("dark", done, done, () => {}),
+  );
+  assert.match(plain(themePicker.layout.render(100)), /→ dark/);
+  themePicker.native.getSelectList().handleInput("\x1b");
+  const extensionPicker = new ExtensionSelectorComponent(
+    "Choose",
+    ["First", "Second"],
+    () => {},
+    () => {},
+  );
+  assert.ok(
+    extensionPicker
+      .render(100)
+      .find((line) => plain([line]).includes("→ First"))
+      .startsWith(sharedTheme.getBgAnsi("selectedBg")),
+  );
+
   // Non-command completion retains Pi's original placement and mouse behavior.
   commandEditor.setAutocompleteProvider({
     getSuggestions: async () => ({
@@ -549,7 +895,7 @@ try {
   });
   await openCommands("@");
   commands = commandEditor.render(100);
-  assert.match(plain([commands[0]]), /^─/);
+  assert.equal(plain([commands[0]]).trim(), "");
   assert.ok(
     commands.findIndex((line) => line.includes("file.txt")) >
       commands.findIndex((line) => line.includes(CURSOR_MARKER)),
@@ -674,6 +1020,18 @@ try {
     originalAssistant,
   );
   assert.equal(ToolExecutionComponent.prototype.getRenderShell, originalShell);
+  assert.equal(InteractiveMode.prototype.showSelector, originalShowSelector);
+  assert.equal(SelectList.prototype.renderItem, originalSelectItem);
+  assert.equal(SettingsList.prototype.render, originalSettingsRender);
+  assert.equal(SettingsList.prototype.handleMouse, originalSettingsMouse);
+  assert.equal(
+    ExtensionSelectorComponent.prototype.render,
+    originalExtensionRender,
+  );
+  assert.equal(
+    ExtensionSelectorComponent.prototype.handleMouse,
+    originalExtensionMouse,
+  );
   assert.equal(CustomEditor.prototype.render, originalEditorRender);
   assert.equal(CustomEditor.prototype.handleMouse, originalEditorMouse);
   assert.equal(
@@ -733,7 +1091,7 @@ try {
     nativeTui.stop();
   }
   console.log(
-    "PASS: native shell context, complete results, command preview, clicks, keyboard expansion, error visibility, measured thoughts, anchored expansion, one-line working and idle footer, reload, and cleanup",
+    "PASS: native shell context, complete results, command preview, themed autocomplete and native pickers, clicks, keyboard expansion, error visibility, measured thoughts, anchored expansion, one-line working and idle footer, reload, and cleanup",
   );
 } finally {
   session.dispose();

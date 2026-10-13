@@ -2,6 +2,8 @@ import {
   AssistantMessageComponent,
   ToolExecutionComponent,
   CustomEditor,
+  InteractiveMode,
+  ExtensionSelectorComponent,
 } from "@earendil-works/pi-coding-agent";
 import {
   Container,
@@ -9,13 +11,26 @@ import {
   Text,
   TuiAltScreen,
   truncateToWidth,
+  SelectList,
+  SettingsList,
 } from "@earendil-works/pi-tui";
+import { PickerLayout, pickerRows, selectedRow, promptRow } from "./menus.ts";
 import { ANCHOR, Heading, Guide, messageKey, thinkingRuns } from "./ui.ts";
 
 // Pi has no public hooks for these exact layout and scrolling behaviors.
 // Keep all access to those internals here, and restore it on reload/shutdown.
 export function installCompatibility(state: any): () => void {
   const restorers: Array<() => void> = [];
+  const slashLists = new WeakSet<object>();
+  const settingsLayouts = new WeakMap<
+    object,
+    { map: Array<number | undefined>; height: number }
+  >();
+  const extensionLayouts = new WeakMap<
+    object,
+    { map: Array<number | undefined>; height: number }
+  >();
+  const editorPadding = new WeakMap<object, number>();
   const commandMenus = new WeakMap<
     object,
     { offset: number; padding: number; height: number }
@@ -62,6 +77,111 @@ export function installCompatibility(state: any): () => void {
   }
   try {
     patch(
+      InteractiveMode.prototype,
+      "showSelector",
+      (original) =>
+        function (this: any, create: any) {
+          if (!state.ui) return original.call(this, create);
+          return original.call(this, (done: any) => {
+            const created = create(done);
+            return {
+              ...created,
+              component: new PickerLayout(
+                created.component,
+                () => state.ui.theme,
+              ),
+            };
+          });
+        },
+    );
+    // Extension dialogs do not use InteractiveMode.showSelector.
+    patch(
+      ExtensionSelectorComponent.prototype,
+      "render",
+      (original) =>
+        function (this: any, width: number) {
+          const native = original.call(this, width);
+          if (!state.ui) return native;
+          const layout = pickerRows(native, width, state.ui.theme);
+          extensionLayouts.set(this, {
+            map: layout.map,
+            height: native.length,
+          });
+          return layout.rows;
+        },
+    );
+    patch(
+      ExtensionSelectorComponent.prototype,
+      "handleMouse",
+      (original) =>
+        function (this: any, event: any) {
+          const layout = extensionLayouts.get(this);
+          if (!layout) return original.call(this, event);
+          const y = layout.map[event.y];
+          if (y === undefined) return undefined;
+          return original.call(this, { ...event, y, height: layout.height });
+        },
+    );
+    patch(
+      SelectList.prototype,
+      "renderItem",
+      (original) =>
+        function (
+          this: any,
+          item: any,
+          selected: boolean,
+          width: number,
+          description: string,
+          primaryWidth: number,
+        ) {
+          const display = slashLists.has(this)
+            ? {
+                ...item,
+                label: "/" + (item.label || item.value).replace(/^\//, ""),
+              }
+            : item;
+          const line = original.call(
+            this,
+            display,
+            selected,
+            width,
+            description,
+            primaryWidth,
+          );
+          return selected && state.ui
+            ? selectedRow(line, width, state.ui.theme)
+            : line;
+        },
+    );
+    patch(
+      SettingsList.prototype,
+      "render",
+      (original) =>
+        function (this: any, width: number) {
+          const native = original.call(this, width);
+          if (!state.ui) return native;
+          const search =
+            !this.submenuComponent && this.searchEnabled && this.searchInput
+              ? 0
+              : -1;
+          const layout = pickerRows(native, width, state.ui.theme, search);
+          settingsLayouts.set(this, { map: layout.map, height: native.length });
+          return layout.rows;
+        },
+    );
+    patch(
+      SettingsList.prototype,
+      "handleMouse",
+      (original) =>
+        function (this: any, event: any) {
+          const layout = settingsLayouts.get(this);
+          if (!layout) return original.call(this, event);
+          const y = layout.map[event.y];
+          if (y === undefined) return undefined;
+          return original.call(this, { ...event, y, height: layout.height });
+        },
+    );
+    patch(
       TuiAltScreen.prototype,
       "compositeScrollToEndIndicator",
       () =>
@@ -107,11 +227,14 @@ export function installCompatibility(state: any): () => void {
             ? this.workingStatusIndicator
             : undefined;
           const embedded = this.embedWorkingStatus;
+          const nativePadding = this.paddingX;
+          this.paddingX = Math.max(2, nativePadding);
+          editorPadding.set(this, this.paddingX);
           const autocomplete = this.autocompleteState;
           const slashMenu =
             autocomplete &&
             this.autocompleteList &&
-            this.autocompletePrefix.startsWith("/");
+            this.getText().trimStart().startsWith("/");
           commandMenus.delete(this);
           this.embedWorkingStatus = false;
           // Render the native prompt separately so its cursor and wrapping stay intact.
@@ -122,17 +245,46 @@ export function installCompatibility(state: any): () => void {
           } finally {
             this.embedWorkingStatus = embedded;
             this.autocompleteState = autocomplete;
+            this.paddingX = nativePadding;
           }
+          const activeTheme = state.ui?.theme;
+          if (!activeTheme) return prompt;
+          const promptHeight = this.renderedVisibleLineCount + 2;
+          const actualPadding = Math.min(
+            editorPadding.get(this)!,
+            Math.max(0, Math.floor((width - 1) / 2)),
+          );
+          prompt = prompt.map((line, index) => {
+            if (index >= promptHeight) return line;
+            if (index === 0 || index === promptHeight - 1) {
+              // Preserve native hidden-line counters for long multiline input.
+              const counter = line.match(/[↑↓] \d+ more/)?.[0] ?? "";
+              return promptRow(counter, width, activeTheme);
+            }
+            if (actualPadding >= 2 && index === 1)
+              line = activeTheme.fg("accent", "› ") + line.slice(2);
+            return promptRow(line, width, activeTheme);
+          });
           if (!slashMenu) return prompt;
+          const commandName = !this.getText().trimStart().includes(" ");
+          if (commandName) slashLists.add(this.autocompleteList);
+          else slashLists.delete(this.autocompleteList);
+          this.autocompleteList.layout = {
+            ...this.autocompleteList.layout,
+            minPrimaryColumnWidth: 24,
+            maxPrimaryColumnWidth: 32,
+          };
           const padding = Math.min(
-            Math.max(1, this.paddingX),
+            Math.max(1, editorPadding.get(this)!),
             Math.max(0, Math.floor((width - 1) / 2)),
           );
           const contentWidth = Math.max(1, width - padding * 2);
           const menu = this.autocompleteList
             .render(contentWidth)
             .map((line: string) =>
-              truncateToWidth(" ".repeat(padding) + line, width),
+              /^\s*→ /.test(line.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, ""))
+                ? selectedRow(" ".repeat(padding) + line, width, activeTheme)
+                : truncateToWidth(" ".repeat(padding) + line, width),
             );
           this.renderedAutocompleteHeight = menu.length;
           commandMenus.set(this, {
@@ -148,9 +300,18 @@ export function installCompatibility(state: any): () => void {
       "handleMouse",
       (original) =>
         function (this: any, event: any) {
+          const nativePadding = this.paddingX;
+          const dispatch = (mapped: any) => {
+            this.paddingX = editorPadding.get(this) ?? nativePadding;
+            try {
+              return original.call(this, mapped);
+            } finally {
+              this.paddingX = nativePadding;
+            }
+          };
           const menu = commandMenus.get(this);
           if (!menu || !this.autocompleteState || !this.autocompleteList)
-            return original.call(this, event);
+            return dispatch(event);
           if (event.y >= 1 && event.y < menu.offset) {
             const result = this.autocompleteList.handleMouse?.({
               ...event,
@@ -166,7 +327,7 @@ export function installCompatibility(state: any): () => void {
             event.y >= menu.offset + this.renderedVisibleLineCount + 2
           )
             return undefined;
-          return original.call(this, { ...event, y: event.y - menu.offset });
+          return dispatch({ ...event, y: event.y - menu.offset });
         },
     );
     patch(
