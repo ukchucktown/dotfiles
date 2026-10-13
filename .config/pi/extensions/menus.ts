@@ -47,6 +47,12 @@ export function pickerRows(
   theme: any,
   searchRow = -1,
 ) {
+  const markerLine = native.find((line) =>
+    /^\s*[→›❯]\s/.test(stripTerminalSequences(line)),
+  );
+  const inputPadding = markerLine
+    ? stripTerminalSequences(markerLine).match(/^(\s*)/)![1].length
+    : 0;
   const rows: string[] = [];
   const map: Array<number | undefined> = [];
   for (let i = 0; i < native.length; i++) {
@@ -70,17 +76,19 @@ export function pickerRows(
   if (searchRow >= 0) {
     rows.push(
       promptRow("", width, theme),
-      promptRow(native[searchRow], width, theme),
+      promptRow(" ".repeat(inputPadding) + native[searchRow], width, theme),
       promptRow("", width, theme),
     );
     map.push(undefined, searchRow, undefined);
   }
-  return { rows, map };
+  return { rows, map, inputPadding };
 }
 
 export class PickerLayout extends Container {
   private map: Array<number | undefined> = [];
   private nativeHeight = 0;
+  private searchRow = -1;
+  private inputPadding = 0;
   constructor(
     private native: any,
     private theme: () => any,
@@ -115,6 +123,8 @@ export class PickerLayout extends Container {
     }
     const layout = pickerRows(native, width, this.theme(), searchRow);
     this.map = layout.map;
+    this.searchRow = searchRow;
+    this.inputPadding = layout.inputPadding;
     return layout.rows;
   }
   handleMouse(event: any): any {
@@ -123,6 +133,7 @@ export class PickerLayout extends Container {
     return this.native.handleMouse?.({
       ...event,
       y,
+      x: event.x - (y === this.searchRow ? this.inputPadding : 0),
       height: this.nativeHeight,
     });
   }

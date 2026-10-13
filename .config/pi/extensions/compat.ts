@@ -262,7 +262,10 @@ export function installCompatibility(state: any): () => void {
               return promptRow(counter, width, activeTheme);
             }
             if (actualPadding >= 2 && index === 1)
-              line = activeTheme.fg("accent", "› ") + line.slice(2);
+              line =
+                " ".repeat(actualPadding - 2) +
+                activeTheme.fg("accent", "› ") +
+                line.slice(actualPadding);
             return promptRow(line, width, activeTheme);
           });
           if (!slashMenu) return prompt;
@@ -274,10 +277,9 @@ export function installCompatibility(state: any): () => void {
             minPrimaryColumnWidth: 24,
             maxPrimaryColumnWidth: 32,
           };
-          const padding = Math.min(
-            Math.max(1, editorPadding.get(this)!),
-            Math.max(0, Math.floor((width - 1) / 2)),
-          );
+          // The list's native marker occupies two columns. Match that marker
+          // and the following label to the prompt's marker and input columns.
+          const padding = Math.max(0, actualPadding - 2);
           const contentWidth = Math.max(1, width - padding * 2);
           const menu = this.autocompleteList
             .render(contentWidth)

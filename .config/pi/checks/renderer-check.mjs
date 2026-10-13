@@ -497,8 +497,20 @@ try {
   assert.equal(commandsPlain[0], "", "Menu has a blank row above it");
   assert.match(
     commandsPlain[1],
-    /^  › \/settings/,
-    "Menu retains native selection and side padding",
+    /^› \/settings/,
+    "Menu marker aligns with the prompt",
+  );
+  const selectedCommand = commandsPlain[1];
+  const promptText = commandsPlain[promptBorder + 1];
+  assert.equal(
+    selectedCommand.indexOf("›"),
+    promptText.indexOf("›"),
+    "Slash menu and prompt markers share a column",
+  );
+  assert.equal(
+    selectedCommand.indexOf("/settings"),
+    promptText.indexOf("/"),
+    "Slash menu labels and prompt input share a column",
   );
   assert.ok(
     commandsPlain
@@ -613,6 +625,24 @@ try {
       "Narrow prompt retains hardware cursor",
     );
   }
+  commandEditor.paddingX = 4;
+  await openCommands();
+  const paddedRows = commandEditor.render(100);
+  const paddedMenu = plain([paddedRows[1]]);
+  const paddedPrompt = plain([
+    paddedRows.find((line) => line.includes(CURSOR_MARKER)),
+  ]);
+  assert.equal(
+    paddedMenu.indexOf("›"),
+    paddedPrompt.indexOf("›"),
+    "Alignment follows configured prompt padding",
+  );
+  assert.equal(
+    paddedMenu.indexOf("/settings"),
+    paddedPrompt.indexOf("/"),
+    "Text alignment follows configured prompt padding",
+  );
+  commandEditor.paddingX = 1;
   commandEditor.autocompleteMaxVisible = 3;
   await openCommands();
   assert.equal(
@@ -691,6 +721,11 @@ try {
     assert.ok(
       rows[input].startsWith(sharedTheme.getBgAnsi("userMessageBg")),
       "Search uses shared theme prompt surface",
+    );
+    assert.equal(
+      plain([rows[item]]).indexOf("›"),
+      plain([rows[input]]).indexOf("›"),
+      "Native picker selection and search markers share a column",
     );
     assert.doesNotMatch(
       plain(rows),
