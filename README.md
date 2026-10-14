@@ -579,3 +579,9 @@ are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull
 request. Original configuration in this repository is available under the
 [MIT License](LICENSE); named color themes retain any applicable upstream terms
 listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Shared Pi configuration
+
+The shared Pi setup lives in `.config/pi`. It includes the custom renderer, theme, preferences, pinned packages, and compatibility checks. The setup manager deploys the same assets locally and into Agent Sandbox through a read-only mount. Pi authentication and session history remain independent.
+
+The setup omits Pi's Superset and Moshi hooks. Its guarded updater tests a candidate before application. See [the shared Pi guide](.config/pi/README.md) for installation, updates, and the remaining internal-API compatibility patches.

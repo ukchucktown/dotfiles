@@ -65,3 +65,34 @@ jobs:
           target="$(mktemp -d)"
           mkdir -p "$target/.config"
           stow --simulate --verbose --target="$target" --no-folding .
+
+  pi:
+    name: Pi compatibility (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install the verified Pi release
+        shell: bash
+        run: |
+          pi_release="$(cat .config/pi/pi-version)"
+          [[ "$pi_release" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          npm install --prefix "$RUNNER_TEMP/shared-pi" --ignore-scripts --no-audit --no-fund --save-exact "@earendil-works/pi-coding-agent@${pi_release}"
+          echo "$RUNNER_TEMP/shared-pi/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "PI_PACKAGE_ROOT=$RUNNER_TEMP/shared-pi/node_modules/@earendil-works/pi-coding-agent" >> "$GITHUB_ENV"
+      - name: Test Pi profiles and blocked updates
+        env:
+          RUN_PI_GATE_TEST: '1'
+        run: node --test tests/pi-profile.test.cjs tests/pi-gate.test.cjs
+      - name: Test native renderer behavior
+        env:
+          TERM: xterm-256color
+          FORCE_COLOR: '1'
+        run: node .config/pi/checks/renderer-check.mjs

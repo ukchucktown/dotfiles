@@ -35,3 +35,6 @@ _darcs
 ^/agent-shell(/.*)?$
 ^/scripts(/.*)?$
 ^/tests(/.*)?$
+
+# Shared Pi assets are deployed by scripts/setup-pi after validation.
+^/\.config/pi(/.*)?$
