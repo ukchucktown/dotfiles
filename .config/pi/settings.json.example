@@ -2,5 +2,8 @@
   "theme": "agent-sandbox",
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-5.4",
-  "packages": ["npm:pi-web-access@0.35.0", "npm:pi-subagents@0.75.0"]
+  "packages": [
+    "npm:pi-web-access@0.40.0",
+    "npm:pi-subagents@0.78.0"
+  ]
 }
