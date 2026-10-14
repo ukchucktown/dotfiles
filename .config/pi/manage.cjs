@@ -357,6 +357,12 @@ function configureSandbox(configDir, target, image) {
   );
   const file = path.join(directory, "compose.mounts.yaml");
   const config = JSON.parse(fs.readFileSync(file, "utf8"));
+  const envFile = path.join(directory, "agent-sandbox.env");
+  const current = fs.readFileSync(envFile, "utf8");
+  const pin = `PI_CLI_VERSION=${target}`;
+  const nextEnvironment = /^PI_CLI_VERSION=.*$/m.test(current)
+    ? current.replace(/^PI_CLI_VERSION=.*$/m, pin)
+    : `${current}${current && !current.endsWith("\n") ? "\n" : ""}${pin}\n`;
   const service = config.services.sandbox;
   service.volumes = service.volumes.filter(
     (v) => v.target !== "/opt/pi-config",
@@ -374,14 +380,7 @@ function configureSandbox(configDir, target, image) {
     "/opt/pi-config/sandbox-entrypoint.sh",
   ];
   writeIfChanged(file, JSON.stringify(config, null, 2) + "\n");
-  const envFile = path.join(directory, "agent-sandbox.env");
-  const current = fs.readFileSync(envFile, "utf8");
-  if (!/^PI_CLI_VERSION=.*$/m.test(current))
-    throw new Error("The sandbox environment has no Pi version pin");
-  writeIfChanged(
-    envFile,
-    current.replace(/^PI_CLI_VERSION=.*$/m, `PI_CLI_VERSION=${target}`),
-  );
+  writeIfChanged(envFile, nextEnvironment);
   run("docker", ["image", "tag", image, "agent-sandbox:local"]);
   const project = run("docker", [
     "inspect",

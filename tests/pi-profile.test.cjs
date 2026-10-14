@@ -141,3 +141,113 @@ test("unknown update options fail before any candidate or deployment action", ()
   assert.match(result.stderr, /Unknown option: --check/);
   assert.equal(result.stdout, "");
 });
+
+function sandboxFixture(t, environment) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pi-sandbox-config-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const configHome = path.join(root, "config"),
+    sandboxDir = path.join(configHome, "agent-sandbox"),
+    bin = path.join(root, "bin"),
+    project = path.join(root, "project"),
+    log = path.join(root, "commands.jsonl"),
+    target = fs.readFileSync(path.join(configDir, "pi-version"), "utf8").trim();
+  for (const directory of [sandboxDir, bin, project])
+    fs.mkdirSync(directory, { recursive: true });
+  const mounts = path.join(sandboxDir, "compose.mounts.yaml"),
+    envFile = path.join(sandboxDir, "agent-sandbox.env");
+  const originalMounts = JSON.stringify({
+    services: {
+      sandbox: {
+        ports: ["49222:22"],
+        volumes: [
+          { type: "bind", source: "/fixture/project", target: "/workspace" },
+          { type: "bind", source: "/fixture/old-pi", target: "/opt/pi-config" },
+        ],
+      },
+    },
+  });
+  fs.writeFileSync(mounts, originalMounts);
+  if (environment !== undefined) fs.writeFileSync(envFile, environment);
+  fs.writeFileSync(
+    path.join(bin, "docker"),
+    '#!/usr/bin/env node\nconst fs = require("node:fs");\n' +
+      'const args = process.argv.slice(2);\n' +
+      'fs.appendFileSync(process.env.FIXTURE_LOG, JSON.stringify(args) + "\\n");\n' +
+      'if (args[0] === "inspect") console.log(process.env.FIXTURE_PROJECT);\n' +
+      'if (args[0] === "exec" && args.at(-2) === "pi" && args.at(-1) === "--version") console.log(process.env.FIXTURE_TARGET);\n',
+    { mode: 0o755 },
+  );
+  fs.writeFileSync(
+    path.join(project, "sandbox"),
+    '#!/usr/bin/env node\nrequire("node:fs").appendFileSync(process.env.FIXTURE_LOG, JSON.stringify(["sandbox", ...process.argv.slice(2)]) + "\\n");\n',
+    { mode: 0o755 },
+  );
+  const invoke = () => {
+    const { spawnSync } = require("node:child_process");
+    return spawnSync(
+      process.execPath,
+      [
+        "-e",
+        'require(process.argv[1]).configureSandbox(process.argv[2], process.argv[3], "fixture-image")',
+        path.join(configDir, "manage.cjs"),
+        configDir,
+        target,
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          XDG_CONFIG_HOME: configHome,
+          PATH: bin + path.delimiter + process.env.PATH,
+          FIXTURE_LOG: log,
+          FIXTURE_PROJECT: project,
+          FIXTURE_TARGET: target,
+        },
+      },
+    );
+  };
+  return { mounts, envFile, originalMounts, target, log, invoke };
+}
+
+test("sandbox setup adds a Pi pin to an environment copied from the tracked template", (t) => {
+  const template = fs.readFileSync(
+    path.resolve(__dirname, "../.config/agent-sandbox/agent-sandbox.env.example"),
+    "utf8",
+  );
+  const f = sandboxFixture(t, template);
+  const result = f.invoke();
+  assert.equal(result.status, 0, result.stderr);
+  const updated = fs.readFileSync(f.envFile, "utf8");
+  assert.ok(updated.includes(`PI_CLI_VERSION=${f.target}\n`));
+  assert.equal(updated.replace(/^PI_CLI_VERSION=.*\n/m, ""), template);
+  const service = JSON.parse(fs.readFileSync(f.mounts, "utf8")).services.sandbox;
+  assert.deepEqual(service.ports, ["49222:22"]);
+  assert.equal(service.volumes.filter((v) => v.target === "/opt/pi-config").length, 1);
+  assert.equal(service.volumes.find((v) => v.target === "/opt/pi-config").read_only, true);
+  const commands = fs.readFileSync(f.log, "utf8").trim().split("\n").map(JSON.parse);
+  assert.ok(commands.some((args) => args[0] === "sandbox" && args[1] === "up"));
+  assert.ok(commands.some((args) => args[0] === "exec" && args.at(-1) === "--version"));
+  assert.equal(f.invoke().status, 0);
+  assert.equal(fs.readFileSync(f.envFile, "utf8"), updated, "Repeat setup does not duplicate the pin");
+});
+
+test("sandbox setup handles a missing final newline and replaces an existing Pi pin", (t) => {
+  for (const current of ["", "CUSTOM=keep", "CUSTOM=keep\nPI_CLI_VERSION=0.0.0\n# keep this comment\n"]) {
+    const f = sandboxFixture(t, current);
+    const result = f.invoke();
+    assert.equal(result.status, 0, result.stderr);
+    const updated = fs.readFileSync(f.envFile, "utf8");
+    assert.equal((updated.match(/^PI_CLI_VERSION=/gm) || []).length, 1);
+    assert.match(updated, new RegExp(`^PI_CLI_VERSION=${f.target.replaceAll(".", "\\.")}$`, "m"));
+    if (current.includes("CUSTOM=keep")) assert.match(updated, /^CUSTOM=keep$/m);
+    if (current.includes("# keep this comment")) assert.ok(updated.includes("# keep this comment"));
+  }
+});
+
+test("an unreadable sandbox environment leaves mounts unchanged before deployment", (t) => {
+  const f = sandboxFixture(t);
+  const result = f.invoke();
+  assert.notEqual(result.status, 0);
+  assert.equal(fs.readFileSync(f.mounts, "utf8"), f.originalMounts);
+  assert.ok(!fs.existsSync(f.log), "No Docker or sandbox command ran");
+});
