@@ -13,8 +13,7 @@ code changes start.
   do not request separate approval.
 - After the issue exists, use the `gh-issue` start or resume workflow. Let that
   workflow create or attach the linked branch and worktree.
-- Do not create an implementation branch or worktree directly with Git or
-  Supacode.
+- Create implementation branches and worktrees through the `gh-issue` workflow.
 
 ## Skill updates
 
@@ -31,13 +30,11 @@ Use the manager that manages the installed skill.
 ## Git worktrees
 
 For a repository at `$HOME/Github/<repository>`, create every task worktree
-with Supacode under
+with native Git under
 `$HOME/Github/worktrees/<repository>/<worktree-name>`.
 
-- Use `supacode repo worktree-new -r <repo-id> --branch <branch> --base <base>
-  --location "$HOME/Github/worktrees/<repository>" --name <worktree-name>
-  --background`.
-- Capture the command output as the new Supacode worktree ID.
+- Let the `gh-issue` start or resume workflow run `git worktree add`.
+- Use the worktree path that the workflow reports as the task checkout.
 - Keep the primary checkout at `$HOME/Github/<repository>` on its stable
   branch, normally `main`.
 - If an existing task worktree is outside the worktree root, make sure that it
