@@ -17,7 +17,8 @@ vim.o.inccommand = 'split'
 vim.o.cursorline = true
 vim.o.scrolloff = 10
 vim.o.confirm = true
-vim.o.termguicolors = true
+-- Use the terminal palette so colors follow the active terminal theme.
+vim.o.termguicolors = false
 
 vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 

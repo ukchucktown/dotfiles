@@ -11,35 +11,7 @@ require('which-key').setup {
   },
 }
 
-require('tokyonight').setup {
-  transparent = true,
-  styles = {
-    comments = { italic = false },
-    sidebars = 'transparent',
-    floats = 'transparent',
-  },
-  on_highlights = function(highlights, colors)
-    local transparent_groups = {
-      'Normal',
-      'NormalNC',
-      'NormalFloat',
-      'FloatBorder',
-      'FloatTitle',
-      'SignColumn',
-      'FoldColumn',
-      'MsgArea',
-      'StatusLine',
-      'StatusLineNC',
-      'TabLineFill',
-      'WinSeparator',
-    }
-
-    for _, group in ipairs(transparent_groups) do
-      highlights[group] = vim.tbl_extend('force', highlights[group] or {}, { bg = colors.none })
-    end
-  end,
-}
-vim.cmd.colorscheme 'tokyonight-night'
+vim.cmd.colorscheme 'default'
 
 require('todo-comments').setup { signs = false }
 
@@ -56,3 +28,34 @@ require('mini.indentscope').setup {}
 local statusline = require 'mini.statusline'
 statusline.setup { use_icons = vim.g.have_nerd_font }
 statusline.section_location = function() return '%2l:%-2v' end
+
+local function statusline_highlights()
+  local light = vim.o.background == 'light'
+  local mode_colors = { Normal = 4, Insert = 2, Visual = 5, Replace = 1, Command = 3, Other = 6 }
+  for mode, color in pairs(mode_colors) do
+    vim.api.nvim_set_hl(0, 'MiniStatuslineMode' .. mode, {
+      ctermfg = light and 15 or 0,
+      ctermbg = color,
+      cterm = { bold = true, nocombine = true },
+    })
+  end
+
+  local section = { ctermfg = light and 0 or 7, ctermbg = light and 7 or 0, cterm = { nocombine = true } }
+  vim.api.nvim_set_hl(0, 'MiniStatuslineDevinfo', section)
+  vim.api.nvim_set_hl(0, 'MiniStatuslineFileinfo', section)
+  vim.api.nvim_set_hl(0, 'MiniStatuslineFilename', section)
+  vim.api.nvim_set_hl(0, 'MiniStatuslineInactive', { ctermfg = 8, ctermbg = section.ctermbg, cterm = { nocombine = true } })
+end
+
+-- The default mini.statusline links lack terminal colors for some sections.
+local statusline_group = vim.api.nvim_create_augroup('user-statusline-colors', { clear = true })
+vim.api.nvim_create_autocmd('ColorScheme', {
+  group = statusline_group,
+  callback = statusline_highlights,
+})
+vim.api.nvim_create_autocmd('OptionSet', {
+  group = statusline_group,
+  pattern = 'background',
+  callback = statusline_highlights,
+})
+statusline_highlights()
