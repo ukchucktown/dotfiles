@@ -23,6 +23,7 @@ lua/
     keymaps.lua
     options.lua
     reference_highlights.lua
+    syntax_highlights.lua
   plugins/
     completion.lua
     editor.lua
@@ -43,8 +44,9 @@ Neovim uses its default colorscheme with true-color output disabled. Text and
 syntax highlights use the active terminal palette, so Rex and Ghostty control
 the colors. The editor uses the terminal foreground and background colors.
 The status line has a continuous background from the terminal palette, with
-colored mode and location labels. This uses fewer distinct syntax colors than
-a dedicated true-color theme.
+colored mode and location labels. Explicit syntax colors distinguish comments,
+constants, numbers, strings, types, parameters, and fields. Category assignments
+stay consistent across terminal themes.
 
 ## Reference highlights
 

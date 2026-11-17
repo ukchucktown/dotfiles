@@ -12,6 +12,7 @@ require('which-key').setup {
 }
 
 vim.cmd.colorscheme 'default'
+require('config.syntax_highlights').setup()
 
 require('todo-comments').setup { signs = false }
 
