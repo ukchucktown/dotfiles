@@ -22,6 +22,7 @@ lua/
     autocmds.lua
     keymaps.lua
     options.lua
+    reference_highlights.lua
   plugins/
     completion.lua
     editor.lua
@@ -35,6 +36,22 @@ lua/
 
 `lua/plugins/init.lua` is the plugin inventory. The other plugin modules contain only
 configuration for their named concern.
+
+## Colors
+
+Neovim uses its default colorscheme with true-color output disabled. Text and
+syntax highlights use the active terminal palette, so Rex and Ghostty control
+the colors. The editor uses the terminal foreground and background colors.
+The status line has a continuous background from the terminal palette, with
+colored mode and location labels. This uses fewer distinct syntax colors than
+a dedicated true-color theme.
+
+## Reference highlights
+
+After a pause on a symbol, Neovim highlights its references. The filter skips
+language keywords and built-in functions such as `require` and `print`.
+Semantic tokens preserve local symbols that share built-in names. If semantic
+tokens are unavailable, the filter uses Tree-sitter syntax captures.
 
 ## Plugin management
 
