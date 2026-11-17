@@ -1,5 +1,6 @@
 -- Run with: nvim --headless -u NONE -i NONE -l tests/nvim-statusline.lua
 local root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h')
+vim.opt.runtimepath:prepend(root .. '/.config/nvim')
 for _, path in ipairs(vim.fn.glob(vim.fn.stdpath 'data' .. '/site/pack/core/opt/*', false, true)) do
   vim.opt.runtimepath:append(path)
 end
