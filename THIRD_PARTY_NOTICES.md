@@ -9,7 +9,6 @@ projects; those projects retain their own names, copyrights, and license terms.
 | `ember.conf`, `ember-light.conf`, `ember-soft.conf` | [Ember palette](https://github.com/ember-theme/ember) |
 | `kanagawa-wave.conf`, `kanagawa-dragon.conf` | [kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim) |
 | `subliminal-nightfall-fuzzy.conf` | [Subliminal Nightfall](https://github.com/mhamrah/subliminal-nightfall) |
-| `supacode.conf` | `Supacode Dark` theme of [Supacode](https://github.com/supabitapp/supacode), FSL-1.1-ALv2 |
 
 Before redistributing a named theme independently of this repository, review
 the upstream project's current license and attribution requirements. Product
