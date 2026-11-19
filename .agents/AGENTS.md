@@ -15,17 +15,38 @@ code changes start.
   workflow create or attach the linked branch and worktree.
 - Create implementation branches and worktrees through the `gh-issue` workflow.
 
+## GitHub access
+
+For local work, use the authenticated `gh` CLI for GitHub operations,
+including reads, reviews, issues, and pull requests. Use `gh api` when
+a dedicated subcommand does not cover the operation.
+
+Use the GitHub connector only when explicitly requested or when `gh`
+is unavailable.
+
 ## Skill updates
 
-Use the manager that manages the installed skill.
+Update a skill through Lampwright. Lampwright asks the manager that owns the
+skill to update it, and then keeps the skill in the agents that had it. A
+direct `npx skills update` links the updated skill into every default agent
+directory, so do not run it.
 
-- When `npx skills` manages the skill, run `npx skills update <skill> --global
-  --yes` for a global installation or `npx skills update <skill> --project
-  --yes` for a project installation.
-- When another manager manages the installation, use that manager's update
-  command.
-- Inspect the installation metadata only when the manager or the scope is
-  unknown.
+1. Find the target. Run `npx lampwright@latest scan --json`. For one skill,
+   take the `id` of the `logicalSkills` entry whose `skill.name` is the skill,
+   and use `logical-skill:<id>`. For every skill from one source, take the `id`
+   of the `groups` entry whose `label` is the source, and use `group:<id>`.
+2. Review. Run `npx lampwright@latest update <selector> --dry-run --json`. Stop
+   and report if the plan has blocks.
+3. Update. Run `npx lampwright@latest update <selector> --yes`. If an action of
+   the plan has a `package-trust` approval, add
+   `--trust-package <runner>:<packageName>@<packageVersion>:<adapterHash>` with
+   the exact values from that approval.
+4. Report each target result. `updated` and `unchanged` are success. For
+   `unresolved` or a failed action, report it and stop. Do not fall back to
+   `npx skills update`.
+
+When Lampwright gives a skill no Update authority, use the update command of
+the manager that owns it.
 
 ## Git worktrees
 
