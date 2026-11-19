@@ -1,4 +1,5 @@
-theme="subliminal-nightfall-fuzzy.conf"
+theme="supacode.conf"
+font-size=13
 background-opacity=0.90
 background-opacity-cells=true
 background-blur=true
